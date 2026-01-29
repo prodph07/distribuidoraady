@@ -34,6 +34,14 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* New Design Colors */
+  --color-ze-green: #2E7D32;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: #1E1E1E;
+  --color-primary-dark: #E6C200;
+  --color-background-light: #F3F4F6;
+  --color-background-dark: #121212;
 }
 
 :root {

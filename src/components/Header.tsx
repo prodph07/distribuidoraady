@@ -22,7 +22,7 @@ export function Header() {
                         <Beer className="h-5 w-5 text-primary" />
                     </div>
                     <span className="text-xl font-black tracking-tighter text-black hidden sm:block">
-                        ZÉ<span className="font-light">BEBIDAS</span>
+                        DISTRIBUIDORA<span className="font-light">ADY</span>
                     </span>
                 </Link>
 

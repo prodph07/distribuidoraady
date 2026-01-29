@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zé Delivery Clone - Bebidas Geladas Rápido</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFD700", // The signature yellow
+                        "primary-dark": "#E6C200",
+                        "background-light": "#F3F4F6", // Light gray background for page
+                        "background-dark": "#121212", // Dark mode background
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1E1E1E",
+                        "ze-green": "#2E7D32", // Discount green
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(0,0,0,0.1)',
+                        'floating': '0 4px 12px rgba(0,0,0,0.08)',
+                    }
+                },
+            },
+        };
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+<header class="sticky top-0 z-50 bg-surface-light dark:bg-surface-dark shadow-sm py-3 px-4 md:px-8 border-b border-gray-100 dark:border-gray-800">
+<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+<div class="flex items-center gap-6 flex-1">
+<div class="bg-primary rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0">
+<span class="material-icons-round text-black">local_drink</span>
+</div>
+<div class="hidden md:flex flex-col cursor-pointer group">
+<span class="text-xs text-gray-500 dark:text-gray-400">Entregar em</span>
+<div class="flex items-center gap-1 font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">
+<span>Rua do Seminário, 123</span>
+<span class="material-icons-round text-sm">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex-1 max-w-2xl">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 group-focus-within:text-primary transition-colors">
+<span class="material-icons-round">search</span>
+</span>
+<input class="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary dark:text-white placeholder-gray-500 transition-all" placeholder="Busque por cerveja, água, petiscos..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 flex-1 justify-end">
+<button class="hidden md:flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 px-4 py-2 rounded-lg transition-colors">
+<span class="material-icons-round">person</span>
+<span>Entrar</span>
+</button>
+<button class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-icons-round text-gray-700 dark:text-gray-200">shopping_bag</span>
+<span class="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<div class="bg-surface-light dark:bg-surface-dark py-4 border-b border-gray-100 dark:border-gray-800">
+<div class="max-w-7xl mx-auto px-4 flex justify-center">
+<div class="bg-gray-100 dark:bg-gray-800 p-1 rounded-full inline-flex relative">
+<button class="px-6 py-2 rounded-full bg-primary text-black font-semibold text-sm shadow-sm z-10 transition-transform active:scale-95">
+                    Receber agora
+                    <span class="block text-[10px] font-normal opacity-80">15-30 min</span>
+</button>
+<button class="px-6 py-2 rounded-full text-gray-600 dark:text-gray-400 font-medium text-sm hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                    Agendar
+                    <span class="block text-[10px] font-normal opacity-70">Com desconto</span>
+</button>
+</div>
+</div>
+</div>
+<main class="flex-grow pb-12">
+<div class="max-w-7xl mx-auto px-4 md:px-8 space-y-10 mt-6">
+<div class="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow">
+<div class="bg-green-100 dark:bg-green-800 p-3 rounded-full shrink-0">
+<span class="material-icons-round text-green-700 dark:text-green-300">local_offer</span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-green-800 dark:text-green-300">Cupom de frete grátis na 1ª compra!</h3>
+<p class="text-sm text-green-700 dark:text-green-400">Aproveite para pedir suas bebidas favoritas.</p>
+</div>
+<span class="material-icons-round text-green-700 dark:text-green-300">chevron_right</span>
+</div>
+<section>
+<h2 class="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Vai de quê hoje?</h2>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Cervejas" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_JITFTiiGTQ1HBww5q6StFd8Yj72KWswM_cMKfRJjnW8K8S2vAsxAvKViWMaY5I6yFAXttvI3GdpEvbSibeZXnSQH7fv3hQncIBaQP2JsGemomAs7Ofl9P3sWk4maBPOZKFcKjWHf5h9v_DXcxSYrDcMnTJqbltrr-m1vfkTVQNWk5rz-gSfOdRykJzjNFZWGy0claj-Hk6eORUAVt-_G4DoUr5StL6gQQEF4GU-W_rzQ946tCfV6rIc4HfYFf7nmIbBAF-7DSJ1I"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Cervejas</span>
+</a>
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Vinhos" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9nXrEFIPYTTI8LcUxrVtNOKnvd9GteaKhcmGNQ-SmN0mVuoFzayTYAbZ15y-hHofXiVkEpjhqBTPESeVB4_2OXDprGiPQi2FkLjUZ3sN5XesYvoh1MpOrio3IOtL0szEiaYKAZD_hNRM_qqPqZXuyYqV_Q7kixpqYNijTs-6xgY_cFJjttP9x7xtBIeNLZvt1Mth336nsMvdGkyMfa2jO4HgnECTuWoF-gUJE-WJfoYv342OsG25KV62QDspQhCaYTIPsVTzLBS_F"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Vinhos</span>
+</a>
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Destilados" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0BQQv-8IMDZwzNDRm15xqgIyn8qrHAYEYDauqTLJkJXFaFB6AvQf4vBkEhJUNz-C96sURbRkTF_ehbng7VgLIGjEDDL8WOCjQF-6GwxCywifzhPZEM4C_uFcAT7Dvenbt6c7FnU4gVTfRm2CT1WICH3N1n3SZeQRZdrMFOisxva1sX3pRT0MOAgFEkP_6ZJSxKJPbEATc0_EZpaTrgguBx-8JzuoGtG5BeSBgy4nyUGn6WyOAnaxVtGHMlmAh4dSRvYrhfebEaN2s"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Destilados</span>
+</a>
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Não Alcoólicos" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuColwoRCLq32gm_WrugtArYUhfRsh6a9-yPrZkJuQjBb28DjCd4YI3uML-C5JsHqUX0y8u51V2IDxDEpulWyqSGBbdGAqTf8qw8Rk5JVoMmzTmbIG6okfV0hzWCieG1k_bt2rIpToUpO8NmW7AeEO6v56kVMh099APACvFHdWeaRLMTPzbeo2TlY4K4BAk5lYWHNIbJhumfEtlzotyP46jPNhdRgT39AnX40uJTwme-8f1L3zFw4Oj_YG3iX7M8M3YHh4eiGxckDcjJ"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Sem Álcool</span>
+</a>
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Petiscos" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoDOQqqoGxQNIwl5nbNndV3civTy4DKaDxt7KAts7S0TKADibkP5QJxkgFCtADMPXHWqgkkZled-Vxz8BcXokj1aC4lFbNHEdHadxnFhGEAf7YlRS6FHqQ4j9smhyLlCFNUeY5iSseCsQshVwQo9P6K_CAhCuUJ-bQiJZcuk53V4s9GcS5v3vxnLeaQ15bi9d5wIMeXFVlSJiB0V7MyXmpm4q_Wu16qkAsIomQnkA-trukFsnqncrNW9zu-8dmZ6fcNh6LdV0UfN4t"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Petiscos</span>
+</a>
+<a class="group relative overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-floating transition-all h-32 flex flex-col items-center justify-end p-4" href="#">
+<img alt="Gelo" class="absolute top-2 w-16 h-16 object-contain group-hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0rMU28MOIEHh_QwZTV3UgTZ0WIFfJvzWx4hOEriwqT5rByJN7tH6JF1eV-r8p9aGJI8ZbWFCWnk1xvsRmM2p8wvPFBgKu7hfqJ2EAbqznhYJfKtMEEhVyjCCsA_uYETG7tD7o0vLtdgw3oPNHT-6kyPraStzFeNG60s3Le2OmVxbNDlfmOXzX_hrwKKm7HysKjAX0T--HU3I4IdFDsw6hrLLr6nL8LOKRRv03DhE7O0JMGRQceVaSNImQxhtExBuBIIg3b8txX9wn"/>
+<span class="font-semibold text-gray-700 dark:text-gray-200 z-10">Outros</span>
+</a>
+</div>
+</section>
+<section class="bg-primary rounded-3xl p-6 md:p-10 relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+<div class="absolute -right-10 bottom-0 h-64 w-64 bg-yellow-500 rounded-full opacity-50 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col md:flex-row gap-8 items-start relative z-10">
+<div class="md:w-1/4">
+<h2 class="text-3xl font-black text-black leading-tight uppercase mb-2">Produtos em Destaque</h2>
+<p class="text-black font-medium mb-6">Para sua 1ª compra</p>
+<button class="bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-gray-900 transition-colors">Ver todos</button>
+</div>
+<div class="flex-1 w-full overflow-x-auto hide-scrollbar pb-4">
+<div class="flex gap-4">
+<div class="min-w-[160px] w-[180px] bg-white dark:bg-surface-dark rounded-xl p-3 flex flex-col justify-between shadow-lg">
+<div class="relative h-32 flex items-center justify-center mb-2">
+<img alt="Budweiser" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABJwBPgz72jDpMAVFK8amiI3AAed-S0O2P68U61ucpGFsqG_8oLisbPjIeEroDCqfJn9pAODG8yxcz_E8ZRqicSmvwMqfqQtYdVJZy3fFT-krrt0lJ1KGCI8hwX3R55GvncuOCXiJUl_m1XCYY51g9YQbotEUA3QRXKiGRQxVBbxctiDmHpkeTEeIiwF9Ae2KOzQrFM4kwSlymN6VvGWeY8PxY1lh6pESGdClks7D0AYLB5K77z_fIJeMnwo5KqwO4QKwhx8fq_aag"/>
+<button class="absolute bottom-0 right-0 bg-primary text-black rounded-full p-1 shadow-md hover:scale-110 transition-transform">
+<span class="material-icons-round text-sm font-bold">add</span>
+</button>
+</div>
+<div>
+<p class="font-bold text-gray-900 dark:text-white text-lg">R$ 5,49</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 leading-tight">Cerveja Budweiser 330ml</p>
+</div>
+</div>
+<div class="min-w-[160px] w-[180px] bg-white dark:bg-surface-dark rounded-xl p-3 flex flex-col justify-between shadow-lg">
+<div class="relative h-32 flex items-center justify-center mb-2">
+<img alt="Heineken" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZBNRk8dWtk_6PML9XEvW4qriICfF3O0nZ-fCk1uJ5E10jwgLLe0qYxH2X9u0oR56ef5wVnUyTCjKWSch1CIJbPDU-01xft4cM1sTm42LhCzg1_I3lPtAdqx-nT1fWImw2nScHtQagRLV4TMbXOkpTbAs486vyqRwkoAEtsJJpG727mt8hj5v5hUYOTe1WZZ27sQEcXKIJGpAal3dnRgRI1qH5qvMJjgI4Xb6yn1wEGabbBKDFk3hZNXJR4TBafcF9zw_UYOiKFeKl"/>
+<button class="absolute bottom-0 right-0 bg-primary text-black rounded-full p-1 shadow-md hover:scale-110 transition-transform">
+<span class="material-icons-round text-sm font-bold">add</span>
+</button>
+</div>
+<div>
+<p class="font-bold text-gray-900 dark:text-white text-lg">R$ 5,69</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 leading-tight">Cerveja Heineken 330ml</p>
+</div>
+</div>
+<div class="min-w-[160px] w-[180px] bg-white dark:bg-surface-dark rounded-xl p-3 flex flex-col justify-between shadow-lg">
+<div class="relative h-32 flex items-center justify-center mb-2">
+<span class="absolute top-0 left-0 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">OFERTA</span>
+<img alt="Pack Cerveja" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUuUOccRDHSWxpShYCgyxdh6PGQS4yiwGA51VE0ce5TH9uCJy_ELRhPus3BHINy-DJLKwSi2tgEDijvpb2Mu9XhuG17T0ZID9jTG6bOLp8zCKzJNJZi0a8fHDYMItIMJINB78KAhym2fsnZwA2Vqk2c_rLHw7gW_6WorTynKJT5_s4gmne7XRy-vGSL2PFVy2bY-IrVJ1Cw4OvZ6i2QDavKzxvgFnmsXaCzjvDLy1Xc61E96jORQ-_fT3-WU5DmoJ-ladZa4_r7ufq"/>
+<button class="absolute bottom-0 right-0 bg-primary text-black rounded-full p-1 shadow-md hover:scale-110 transition-transform">
+<span class="material-icons-round text-sm font-bold">add</span>
+</button>
+</div>
+<div>
+<p class="font-bold text-gray-900 dark:text-white text-lg">R$ 64,69</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 leading-tight">Brahma 350ml Pack Econômico</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section>
+<h2 class="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Ofertas de verão</h2>
+<div class="grid md:grid-cols-2 gap-6">
+<div class="bg-gray-100 dark:bg-surface-dark rounded-2xl p-6 flex items-center justify-between relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
+<div class="z-10 relative">
+<span class="bg-green-700 text-white text-xs font-bold px-2 py-1 rounded mb-2 inline-block">OFERTA</span>
+<h3 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight mb-2">Salgadinhos<br/>com Desconto</h3>
+<button class="bg-primary text-black p-2 rounded-full mt-2 group-hover:bg-primary-dark transition-colors">
+<span class="material-icons-round">arrow_forward</span>
+</button>
+</div>
+<img alt="Salgadinhos" class="h-32 object-contain transform rotate-12 group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR_yv2Uxg4h__N8IMFEFw09b1faozBukBD5rzYGWrfK76SZB_sM75ciXut_34QzfacIDEwmdBPIonGr0qn_lefTOBrZaNpAggvNYZYu2vhuIEe8TFIHKg3qE75FqL-poaWJwvAQDwxDYIUu-9sfkpz_KNBDEEQj_YN2bpkDuvNO8UWWnIK4vTArRAqmP09-OBm6ZvVCUhN55o2VkNg2Y0Fgt-7pUjTeT0FLCu7LpnOvEFWnBiDBzsn82joTA0cwicqhqOqnXI7CU9s"/>
+</div>
+<div class="bg-gray-100 dark:bg-surface-dark rounded-2xl p-6 flex items-center justify-between relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
+<div class="z-10 relative">
+<span class="bg-green-700 text-white text-xs font-bold px-2 py-1 rounded mb-2 inline-block">OFERTA</span>
+<h3 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight mb-2">Cervejas com<br/>desconto</h3>
+<button class="bg-primary text-black p-2 rounded-full mt-2 group-hover:bg-primary-dark transition-colors">
+<span class="material-icons-round">arrow_forward</span>
+</button>
+</div>
+<img alt="Cervejas" class="h-32 object-contain transform -rotate-12 group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjy6RMrUP1W4NKmN15_6bf5gwfJQhqkbdvfq7n_AQqE26smRHlC9iIXpOz5iAZtB1uanjk68Kadt0HB-omVDQtxpn1kdA4SPYGpIwpvW9DAl5MXc66Q31oVm4mKN9IAhgPt3e5FHTbVrqF-3JQePpPFjlfS0F1DpkoEXX8mcU1GIBisL2PFzuYqOacxJE_J2fmCH3NDC_K15Dq9mnfsPRXDbJYuFQ5_wWYta36YBfGc4FPlVqZOYDRUgfwm5yK677Pe6pZoh2nF2P9"/>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100">Recomendados pelo Zé</h2>
+<a class="text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-primary transition-colors flex items-center" href="#">
+                        Ver todos <span class="material-icons-round text-base ml-1">chevron_right</span>
+</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-card hover:shadow-floating transition-all border border-transparent dark:border-gray-800 flex flex-col h-full">
+<div class="relative mb-4 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+<div class="absolute top-2 left-2 flex flex-col gap-1">
+<span class="bg-ze-green text-white text-[10px] font-bold px-2 py-0.5 rounded">-10%</span>
+<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded">Leve + Por -</span>
+</div>
+<img alt="Whisky" class="h-32 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6ICO00RRTQ2bTcrF4Ye3YHqwHOySip8oX4kIp-43W21hr5hsTb44ncicVW_kebO5W3HYS7mAOw8Zmc8nKLDi6SdvqhywYJdEp5SSAaMPX_Z8RoaKIxrJxgxHLrtDWh0Gosj-Ohz_OWwuA3eek9axobmvr6HiENShkX4MJRmS0VGeJuk4v5tP3IYEAW-pGCXIq7KnaXkIHXV4Bv2OWfFfSo5c3Yz_KqZKraoJnRIY2QGoPAGkV5BUi2GAlIb3ZnYwhYKqfTdEgq7zs"/>
+</div>
+<div class="space-y-1">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-ze-green dark:text-green-400">R$ 96,92</span>
+<span class="text-xs text-gray-500">/un. 3un</span>
+</div>
+<p class="text-xs text-gray-400 line-through">1 un. • R$ 102,31</p>
+<p class="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-2 h-10">Whisky Johnnie Walker Red Label 1L</p>
+</div>
+<button class="w-full mt-4 bg-primary hover:bg-primary-dark text-black font-bold py-2 rounded-lg transition-colors text-sm">
+                            Adicionar
+                        </button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-card hover:shadow-floating transition-all border border-transparent dark:border-gray-800 flex flex-col h-full">
+<div class="relative mb-4 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+<div class="absolute top-2 left-2 flex flex-col gap-1">
+<span class="bg-ze-green text-white text-[10px] font-bold px-2 py-0.5 rounded">-20%</span>
+</div>
+<img alt="Vodka" class="h-32 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4ESrf0p2w4dTcY9gV10PQZa6cY3TasTcWAOBawg3G1PJOp9fx7EX_PzCxfx3Oh4Kp_1lCFH7_MIEkVdtJgkS3KE7t2LLyW6FvuCSmTSF80x8EfkGBQjXUtMMGslMaXBhu_U8xfD7nMoQREPH3eR4JD1XjjgSsxWKGauIdyUJuasEteDeBMOltDynZpqHSC8UW2NSrftQtZH6i8oMD22JAxpdAydlF9GyyFSfxqdAJCB2ctx8vgYlYKtE_gGotKXLn23LC-PD0xKQA"/>
+</div>
+<div class="space-y-1">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-ze-green dark:text-green-400">R$ 33,03</span>
+<span class="text-xs text-gray-500">/un. 2un</span>
+</div>
+<p class="text-xs text-gray-400 line-through">1 un. • R$ 37,16</p>
+<p class="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-2 h-10">Vodka Smirnoff 998ml</p>
+</div>
+<button class="w-full mt-4 bg-primary hover:bg-primary-dark text-black font-bold py-2 rounded-lg transition-colors text-sm">
+                            Adicionar
+                        </button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-card hover:shadow-floating transition-all border border-transparent dark:border-gray-800 flex flex-col h-full">
+<div class="relative mb-4 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+<img alt="Corona" class="h-32 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHhz2-ce3vk-iX5Pol65l9tBosw_fXWhaYZs2DEJMnBInjEgQvXpisL7_XzeKTwCxxD-C7T2FB89cB3kFOO5g8mxhb0pl26lFiDrNX3YC5gZFlEqtFuA77VfwBU8lDMTgIFzbRYT_kQ8M-lN4WJSyWs8-M4WM1OQUOBq1DofKTo06bxfNMOaEoTEHK8ubC6RiS_89Oy704JQ2RIUi9rov_wKVpOXE_JmCtm-bW2bQ0AA_q7HekQ2rJG9mzWqkI43Pj4Zb0gmXzVgl0"/>
+</div>
+<div class="space-y-1">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-gray-900 dark:text-white">R$ 6,99</span>
+</div>
+<p class="text-xs text-gray-400 opacity-0 select-none">Spacer</p>
+<p class="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-2 h-10">Cerveja Corona Extra Long Neck 330ml</p>
+</div>
+<button class="w-full mt-4 bg-primary hover:bg-primary-dark text-black font-bold py-2 rounded-lg transition-colors text-sm">
+                            Adicionar
+                        </button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-card hover:shadow-floating transition-all border border-transparent dark:border-gray-800 flex flex-col h-full">
+<div class="relative mb-4 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+<img alt="Gin" class="h-32 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOaX6yS_VC9ZZAyiEGG21UiUHbIpsqYrKL_YN3fPLJpkRio6OzYl_GKMlS_oUEz2XK1bI7uyNU6ny3S4Q2IfOlgjN49LeYnhv5Xo0a_5jbvrkOJ1QUVe2JUGcwRlVk44zbekJrx_qf6GmQ82CZXOWv-dmPgrg6cyT31fh7f9lQA6RWoKLWH5SiyYbfwd_Xr3-CGu9h8Mds2IoOQkaE0qcLXaUKNGwYcN4BxN0WlnhBF4tKQ6z45f-4yzh_J-G4xTVACtCBpCuF2zlH"/>
+</div>
+<div class="space-y-1">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-gray-900 dark:text-white">R$ 89,90</span>
+</div>
+<p class="text-xs text-gray-400 opacity-0 select-none">Spacer</p>
+<p class="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-2 h-10">Gin Tanqueray London Dry 750ml</p>
+</div>
+<button class="w-full mt-4 bg-primary hover:bg-primary-dark text-black font-bold py-2 rounded-lg transition-colors text-sm">
+                            Adicionar
+                        </button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-card hover:shadow-floating transition-all border border-transparent dark:border-gray-800 flex flex-col h-full">
+<div class="relative mb-4 flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+<div class="absolute top-2 left-2 flex flex-col gap-1">
+<span class="bg-ze-green text-white text-[10px] font-bold px-2 py-0.5 rounded">-15%</span>
+</div>
+<img alt="Spaten" class="h-32 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8JrSolKdoqEueOpll2IiW6_chjRYaehAq_lDa1tWvZZ_BKj7Me32XxECCnQItpyPu1k528A_cpyTb0Td4eQ3wX0GZrMuBaYvAnl806JhmdaU6JkaKlTcAT98vQ3Fbod9oZKJ3KpPGNglzSwdLOb9QWqDoV_MUFJpeLgPYgV0c2V8qNIvWKHqPqeJv9nkC7DsyDFdOiLG-NTQoqzzC8XYlaurW1jeWxwBIPxcRPhR84Af_LLOtYrv1JirrpAovGfdMf6g7TjA1STFD"/>
+</div>
+<div class="space-y-1">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-ze-green dark:text-green-400">R$ 4,99</span>
+</div>
+<p class="text-xs text-gray-400 line-through">R$ 5,89</p>
+<p class="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-2 h-10">Cerveja Spaten Munich Puro Malte 350ml</p>
+</div>
+<button class="w-full mt-4 bg-primary hover:bg-primary-dark text-black font-bold py-2 rounded-lg transition-colors text-sm">
+                            Adicionar
+                        </button>
+</div>
+</div>
+</section>
+<section class="rounded-xl overflow-hidden relative h-48 md:h-64 flex items-center bg-gradient-to-r from-red-600 to-red-800">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
+<div class="relative z-10 px-8 md:px-16 w-full flex items-center justify-between">
+<div class="text-white max-w-lg">
+<h2 class="text-3xl md:text-5xl font-black uppercase leading-none mb-2 italic">Bora Garantir<br/>O Chopp</h2>
+<div class="bg-white text-red-700 font-bold px-2 py-1 inline-block text-sm uppercase">Do Carnaval</div>
+<div class="mt-4">
+<button class="bg-yellow-500 hover:bg-yellow-400 text-red-900 font-black px-6 py-2 rounded shadow-lg uppercase tracking-wide transition-colors">Aproveitar!</button>
+</div>
+</div>
+<img alt="Chopp" class="hidden md:block h-64 w-64 object-cover rounded-full border-4 border-white shadow-2xl transform rotate-3 translate-y-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0b2FLtaELylN6aUD6iXdWZUxV_jKXj-uN2pY_S08ub4YcmsFwt2QyE74FmNW8wObYPS2Tr4Mjm2GhCZPDqP6yEJHTDKdTydkeM5XVmjQ9xjrlOQH2ZnqdVjWa1UsVkIBebZ6EnCP7dJ1wKT2Uc2DZzI5QJVxhA8yZdZz_IDblr2jwApM58rH4hqMGiPv2KcYdq2Vo2TIDVMwoP1S_p-WTC26mH4JvSldYGFaH1RWUlGQh8KOGPbnidUCpBE70uXvBQu_00poD7cOl"/>
+</div>
+</section>
+<section>
+<h2 class="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Marcas que amamos</h2>
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+<div class="aspect-square bg-red-600 rounded-2xl flex items-center justify-center p-4">
+<span class="text-white font-black text-xl italic tracking-wider">BRAHMA</span>
+</div>
+<div class="aspect-square bg-blue-900 rounded-2xl flex items-center justify-center p-4">
+<span class="text-white font-serif font-bold text-xl">Corona</span>
+</div>
+<div class="aspect-square bg-yellow-400 rounded-2xl flex items-center justify-center p-4">
+<span class="text-red-600 font-black text-2xl tracking-tighter transform -rotate-6">SKOL</span>
+</div>
+<div class="aspect-square bg-green-700 rounded-2xl flex items-center justify-center p-4">
+<span class="text-white font-bold text-xl">Tanqueray</span>
+</div>
+<div class="aspect-square bg-blue-700 rounded-2xl flex items-center justify-center p-4">
+<span class="text-white font-bold text-lg tracking-widest">BEATS</span>
+</div>
+<div class="aspect-square bg-yellow-600 rounded-2xl flex items-center justify-center p-4">
+<span class="text-white font-serif text-center text-xs font-bold">JOHNNIE<br/>WALKER</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<footer class="bg-surface-dark text-gray-400 py-12 mt-12 border-t border-gray-800">
+<div class="max-w-7xl mx-auto px-4 md:px-8">
+<div class="grid md:grid-cols-4 gap-8 mb-8">
+<div>
+<h3 class="text-white font-bold mb-4">Sobre o Zé</h3>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-primary" href="#">Quem somos</a></li>
+<li><a class="hover:text-primary" href="#">Cidades atendidas</a></li>
+<li><a class="hover:text-primary" href="#">Trabalhe conosco</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-white font-bold mb-4">Parcerias</h3>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-primary" href="#">Quero ser parceiro</a></li>
+<li><a class="hover:text-primary" href="#">Área do entregador</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-white font-bold mb-4">Ajuda</h3>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-primary" href="#">Central de ajuda</a></li>
+<li><a class="hover:text-primary" href="#">Política de privacidade</a></li>
+<li><a class="hover:text-primary" href="#">Termos de uso</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-white font-bold mb-4">Social</h3>
+<div class="flex gap-4">
+<div class="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary hover:text-black transition-colors cursor-pointer">IG</div>
+<div class="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary hover:text-black transition-colors cursor-pointer">TW</div>
+<div class="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary hover:text-black transition-colors cursor-pointer">FB</div>
+</div>
+</div>
+</div>
+<div class="border-t border-gray-800 pt-8 text-xs text-center">
+<p class="mb-2">BEBA COM MODERAÇÃO. VENDA E CONSUMO PROIBIDOS PARA MENORES DE 18 ANOS.</p>
+<p>© 2024 Zé Delivery Clone. Todos os direitos reservados.</p>
+</div>
+</div>
+</footer>
+<script>
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        // Optional: Add a button to toggle (hidden in UI but useful for testing)
+        // console.log("Toggle dark mode by adding 'dark' class to html element");
+    </script>
+
+</body></html>
