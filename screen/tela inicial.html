@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zé Delivery Inspired Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f2cc0d",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#181711",
+                        "surface-dark": "#24231b",
+                        "surface-hover": "#2f2d22",
+                    },
+                    fontFamily: {
+                        "display": ["Be Vietnam Pro", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal scroll areas */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-x-hidden min-h-screen flex flex-col">
+<!-- Sticky Header -->
+<header class="sticky top-0 z-50 w-full bg-[#181711] border-b border-[#393628] shadow-md">
+<div class="layout-container max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-20 gap-8">
+<!-- Logo -->
+<div class="flex items-center gap-3 shrink-0 cursor-pointer">
+<div class="size-10 bg-primary rounded-full flex items-center justify-center text-black">
+<span class="material-symbols-outlined !text-3xl">sports_bar</span>
+</div>
+<h1 class="text-white text-xl font-extrabold tracking-tight hidden md:block">Zé Delivery</h1>
+</div>
+<!-- Search Bar -->
+<div class="hidden md:flex flex-1 max-w-2xl">
+<label class="flex w-full items-center bg-[#393628] rounded-full px-4 h-12 focus-within:ring-2 focus-within:ring-primary/50 transition-all duration-300">
+<span class="material-symbols-outlined text-[#bab59c]">search</span>
+<input class="w-full bg-transparent border-none text-white placeholder-[#bab59c] focus:ring-0 ml-2" placeholder="Pesquisar cerveja, água, petiscos..." type="text"/>
+</label>
+</div>
+<!-- Right Actions -->
+<div class="flex items-center gap-4 shrink-0">
+<!-- Location (Desktop) -->
+<button class="hidden lg:flex items-center gap-2 text-white hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<div class="flex flex-col items-start text-xs leading-tight">
+<span class="text-[#bab59c]">Entregar em</span>
+<span class="font-bold truncate max-w-[150px]">Av. Paulista, 1000</span>
+</div>
+<span class="material-symbols-outlined text-sm text-[#bab59c]">expand_more</span>
+</button>
+<div class="h-8 w-[1px] bg-[#393628] hidden lg:block"></div>
+<!-- Icons -->
+<button class="flex items-center justify-center size-10 rounded-full bg-[#393628] hover:bg-surface-hover text-white transition-colors relative group">
+<span class="material-symbols-outlined">person</span>
+<span class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-white text-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Perfil</span>
+</button>
+<button class="flex items-center justify-center size-10 rounded-full bg-[#393628] hover:bg-surface-hover text-white transition-colors relative group">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="absolute top-0 right-0 size-3 bg-primary rounded-full border-2 border-[#181711]"></span>
+<span class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-white text-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Sacola</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Mobile Search (Visible only on small screens) -->
+<div class="md:hidden px-4 pb-4">
+<label class="flex w-full items-center bg-[#393628] rounded-full px-4 h-12">
+<span class="material-symbols-outlined text-[#bab59c]">search</span>
+<input class="w-full bg-transparent border-none text-white placeholder-[#bab59c] focus:ring-0 ml-2" placeholder="Pesquisar..." type="text"/>
+</label>
+</div>
+</header>
+<main class="flex-grow layout-container max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 w-full py-8 space-y-8">
+<!-- Hero Carousel -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Primary Banner -->
+<div class="relative overflow-hidden rounded-xl bg-primary h-64 sm:h-80 flex flex-col justify-center px-8 group cursor-pointer hover:shadow-[0_0_20px_rgba(242,204,13,0.3)] transition-all">
+<div class="relative z-10 max-w-[60%]">
+<h2 class="text-black text-3xl sm:text-4xl font-extrabold leading-tight mb-4">BORA TOMAR UMA?</h2>
+<button class="bg-black text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 transition-transform">
+                        Ver Ofertas
+                    </button>
+</div>
+<!-- Decorative Image -->
+<div class="absolute right-[-20px] bottom-[-20px] w-[50%] h-[120%] bg-contain bg-no-repeat bg-center transform rotate-12 group-hover:rotate-6 transition-transform duration-500" data-alt="3D illustration of splashing beer bottles and ice cubes" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuARW-l60Ouvs-MnZf3dvDE2WkvGbkTxHWfnbcNgV9Dh5k8V7OykO-nO6vDlSJ4lNdLLwqgp-Vz29rAb35xpbKEYLDe_CtUbAei6P_AbkZjCgLzrAkV_1bE09azrwkfEDSeM8LlCHBBEzKigckX_EMYmxj_hnN5YDxoj-ATbbvo_fCrBCZi7yYbZ01TqI7JNIPB_lSj1gQG88pTyu8jhFEKKgeclIvNEZ36_HicAh9zIVlRqK64E5Q-1w3n8c4ZHU-Nn2qlkXRnfaKg7'); mask-image: linear-gradient(to left, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%); mix-blend-mode: multiply;">
+</div>
+<!-- Fallback abstract if image fails/for concept -->
+<div class="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-black/10 to-transparent"></div>
+</div>
+<!-- Secondary Banner -->
+<div class="relative overflow-hidden rounded-xl bg-[#2a2a2a] h-64 sm:h-80 flex flex-col justify-center px-8 group cursor-pointer hover:shadow-lg transition-all">
+<div class="relative z-10 max-w-[60%]">
+<span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Sustentabilidade</span>
+<h2 class="text-white text-3xl sm:text-4xl font-extrabold leading-tight mb-4">RETORNÁVEL</h2>
+<p class="text-gray-300 text-sm mb-6">Sua bebida gelada, rápido e ajudando o planeta.</p>
+<button class="bg-white text-black px-6 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition-colors">
+                        Saiba mais
+                    </button>
+</div>
+<div class="absolute right-0 top-0 w-1/2 h-full bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity" data-alt="Close up of green glass bottles with condensation" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC1r4lDz3i5-K6XBMBzWNM5nYUoFOiq7ayp3qLKw24apCQV2r6rqk21LvteGTo_cfzYFTFBg8DbmzHUAgXgdA4mDi7AT4L4JCpQe--Njy7xGbieLdWQCQBYdmB4KYQKCrA3frcH0ZLfkb-vndDSq5X4U9NQ_Ric-OCZorLbI1Tue7bEvpn5KCImfhKV2ZmVY3RcmvGBPNC5NTNYFrb2DcElwJ5GScweqXjmc-74L_iO5SA5LTgP5keY0lKZEzFIKQU8aPLfCXnAGRH_');">
+</div>
+</div>
+</section>
+<!-- Categories Chips -->
+<section class="overflow-hidden">
+<div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+<!-- Active Chip -->
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-black px-5 h-10 font-bold hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-[20px]">sports_bar</span>
+<span>Cervejas</span>
+</button>
+<!-- Inactive Chips -->
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">local_bar</span>
+<span>Destilados</span>
+</button>
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">wine_bar</span>
+<span>Vinhos</span>
+</button>
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">no_drinks</span>
+<span>Sem Álcool</span>
+</button>
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">tapas</span>
+<span>Petiscos</span>
+</button>
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">ac_unit</span>
+<span>Gelo</span>
+</button>
+<button class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#393628] text-white px-5 h-10 font-medium hover:bg-[#4a4635] transition-all">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+<span>Churrasco</span>
+</button>
+</div>
+</section>
+<!-- Product Grid Section -->
+<section class="pb-12">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold text-white tracking-tight">Destaques da Região</h2>
+<a class="text-primary text-sm font-bold hover:underline" href="#">Ver todos</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+<!-- Card 1 -->
+<div class="bg-surface-dark rounded-xl p-4 flex flex-col gap-3 group hover:bg-surface-hover transition-colors relative border border-transparent hover:border-[#393628]">
+<div class="aspect-[3/4] w-full relative bg-white/5 rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-contain bg-no-repeat group-hover:scale-105 transition-transform duration-300" data-alt="Can of Brahma Duplo Malte beer" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC8t05U1B8OD6D-t7GUG8iI71V34CwJ6iEmnm4vlhSBwuiQpeThw49ExwPLTCHSx5jmuGD23yBpChw_h3DxMO2iRQWybZVS3BNn4Xp_HB2AZ4UNAsT4poRLujudz9Zan60UbRTs3IKF4OnMscj6lvYzS9T2SpogInSHEZ8N4YFvb27InYL6csKFWca8EvLTS69a16gyMwTcQLKtvSZFU2YEfVbLb56UuPOsrkIrgsqPcAAKjmbj_Sy1h_7IsDtNaJBFFSApvyIFFJFD');"></div>
+<div class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Oferta</div>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-white text-sm font-medium leading-tight mb-1 line-clamp-2">Brahma Duplo Malte 350ml</p>
+<p class="text-[#bab59c] text-xs mb-3">Lata 350ml</p>
+<div class="mt-auto flex items-end justify-between">
+<div>
+<span class="text-[#bab59c] text-xs line-through block">R$ 4,50</span>
+<span class="text-white font-bold text-lg">R$ 3,49</span>
+</div>
+<button class="size-8 rounded-full bg-primary flex items-center justify-center text-black hover:scale-110 transition-transform shadow-md">
+<span class="material-symbols-outlined text-xl font-bold">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-dark rounded-xl p-4 flex flex-col gap-3 group hover:bg-surface-hover transition-colors relative border border-transparent hover:border-[#393628]">
+<div class="aspect-[3/4] w-full relative bg-white/5 rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-contain bg-no-repeat group-hover:scale-105 transition-transform duration-300" data-alt="Green bottle of Heineken beer" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDCc8Iau_lzUIZy5iEHT7LgB3_Zz0Be7BwNIVilCzoTmob6gO_fboeNaIw9xM72ZgFd8nedQ0xAsnfIERMLT-aItuLQykizEe1MiwIvtgBCUR9ehFTzr9Vf4OeSQjoxduypX8GcZX8zt6pANiUecWO8IJ2fW-Vj-2AIKNHnW6TbhY5m6P0fz19HxK_YG2XVH0b2Gi5Csiw6FtqdDzhIFxWaYEdDOsSdNB6BiUdEDQXEbd7GbP37XbPDF_L50Bq7f0vy8HBVu2eZx4cs');"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-white text-sm font-medium leading-tight mb-1 line-clamp-2">Heineken Garrafa 600ml</p>
+<p class="text-[#bab59c] text-xs mb-3">Garrafa 600ml</p>
+<div class="mt-auto flex items-end justify-between">
+<div>
+<span class="text-white font-bold text-lg">R$ 9,90</span>
+</div>
+<button class="size-8 rounded-full bg-white/10 text-white hover:bg-primary hover:text-black flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-xl font-bold">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-dark rounded-xl p-4 flex flex-col gap-3 group hover:bg-surface-hover transition-colors relative border border-transparent hover:border-[#393628]">
+<div class="aspect-[3/4] w-full relative bg-white/5 rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-contain bg-no-repeat group-hover:scale-105 transition-transform duration-300" data-alt="Blue can of Skol Beats Senses" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAy8anCJYHiLndSZn4vv5GLQYjyaFB4k80H4uukcGEHSe9wZZu_X1w3J2coAAm1jytgMPuaE8LY8OJ0xfMsZuaOcZFKzdLZzEj4YtG-tdNhuBmGhQReLgrP6oFnOeUaCnZNCmsou8yPhziPOzJ5kCKTyvpQhBqekkSM99NdRYMzfBrYa8q_tzw8a8eBkrNHs1JO7hEiWx71MS1XZqRkh7nbolK_wZIdPAooEZ7tR732cxWoWxN2tnP79A3VdE8aDF7U8sIjeg_xkDFq');"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-white text-sm font-medium leading-tight mb-1 line-clamp-2">Skol Beats Senses</p>
+<p class="text-[#bab59c] text-xs mb-3">Lata 269ml</p>
+<div class="mt-auto flex items-end justify-between">
+<div>
+<span class="text-white font-bold text-lg">R$ 5,49</span>
+</div>
+<button class="size-8 rounded-full bg-white/10 text-white hover:bg-primary hover:text-black flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-xl font-bold">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-dark rounded-xl p-4 flex flex-col gap-3 group hover:bg-surface-hover transition-colors relative border border-transparent hover:border-[#393628]">
+<div class="aspect-[3/4] w-full relative bg-white/5 rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-contain bg-no-repeat group-hover:scale-105 transition-transform duration-300" data-alt="2L bottle of Coca-Cola" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAAj5-nSR8ilVjqxnYG4ghsJEjyhmZr9Fol9kAKxM3ymS3XnAdWZtsTsuBF_cx-BxmUwZY3MnC3ZkqKBfs51va-KpO5NbJ5R9EMcvrKb6TXJwYpEl9MLRLKEKnU5eLUcviQt28bYZMshhwu9Mi2pcWMjxKd1RkvxmGnEMJosCvFkJtv8usdi5t2fpwHpT-iZWRVEEbBYq9y1-l7St6r0JhPRcCNytn_9F2A1FtAQD_p-BVnWJXmBzZekPKdNai3dYYWj4j0-FG5nNc6');"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-white text-sm font-medium leading-tight mb-1 line-clamp-2">Coca-Cola Original</p>
+<p class="text-[#bab59c] text-xs mb-3">Pet 2L</p>
+<div class="mt-auto flex items-end justify-between">
+<div>
+<span class="text-white font-bold text-lg">R$ 8,99</span>
+</div>
+<button class="size-8 rounded-full bg-white/10 text-white hover:bg-primary hover:text-black flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-xl font-bold">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5 (Hidden on very small screens, shown on md+) -->
+<div class="bg-surface-dark rounded-xl p-4 flex flex-col gap-3 group hover:bg-surface-hover transition-colors relative border border-transparent hover:border-[#393628]">
+<div class="aspect-[3/4] w-full relative bg-white/5 rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-contain bg-no-repeat group-hover:scale-105 transition-transform duration-300" data-alt="Bottle of Tanqueray Gin" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxgUY_lnTpSb7ljmUbY8n_i5WwYjkkfFX-M59rV3fcvNot_-6ZJBNjcag6SPnatldK4ir_kLReif-JtfpMVNFhx81zt1FjkHWUWd7JXvUFASYuICtWqY18Stm6JU9UD0-YpJ6CMVEPlMCKheU54EVeFayJuX1-auCX_rGKBvpJ0ttB0Q7dvQ0vrjgS2fdygs8f2TVhVRAvQnIg7Sgc1mGZeV-VfKaYxOOgq4qauxJiZVpGXi5MWp9MNQDkjJWtp1vP5GrHGrvx0WzD');"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-white text-sm font-medium leading-tight mb-1 line-clamp-2">Gin Tanqueray London</p>
+<p class="text-[#bab59c] text-xs mb-3">Garrafa 750ml</p>
+<div class="mt-auto flex items-end justify-between">
+<div>
+<span class="text-white font-bold text-lg">R$ 119,90</span>
+</div>
+<button class="size-8 rounded-full bg-white/10 text-white hover:bg-primary hover:text-black flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-xl font-bold">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Secondary Section: Combos -->
+<section class="pb-12">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold text-white tracking-tight">Combos da Galera</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-[#2f2d22] rounded-xl p-6 flex flex-row items-center justify-between cursor-pointer hover:bg-[#393628] transition-colors">
+<div class="flex flex-col gap-2">
+<h3 class="text-white text-lg font-bold">Esquenta em Casa</h3>
+<p class="text-[#bab59c] text-sm max-w-[200px]">6 Brahma Duplo Malte + 1 Saco de Gelo 5kg</p>
+<div class="mt-2 text-primary font-bold text-xl">R$ 28,90</div>
+</div>
+<div class="h-24 w-32 bg-contain bg-center bg-no-repeat" data-alt="Combo of beer cans and ice bag" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAUn3edYL8mN0f2Houx-z5kBXlf7qOZy_EkYrcPLC5pkERvLToUkShm18bnA4j5BzCUjQ2DWnmcmKWvQ_l0t-UbBRZ5Bt1-AZACyibP4ptif5-96A-1uLFvfTMcUz_j2h-OlOX4x6KrHFc2gpsDrUmEsY40k2QXjaN9cgaapAYXfgEdUk-8gbbKBigRfeC6o5UVW20ur91w_rxPHKSMCauQMxeecSNxO5HSeS4n1cq-f1ztkwkkGj3V8Tmg4gaz60i4WU3Q5I-RGxQx');"></div>
+</div>
+<div class="bg-[#2f2d22] rounded-xl p-6 flex flex-row items-center justify-between cursor-pointer hover:bg-[#393628] transition-colors">
+<div class="flex flex-col gap-2">
+<h3 class="text-white text-lg font-bold">Churrasco Completo</h3>
+<p class="text-[#bab59c] text-sm max-w-[200px]">12 Heineken + 2kg Carvão + Sal Grosso</p>
+<div class="mt-2 text-primary font-bold text-xl">R$ 145,00</div>
+</div>
+<div class="h-24 w-32 bg-contain bg-center bg-no-repeat" data-alt="BBQ setup with beer bottles" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD3a4JE4O_Y2ZgvBgGSf07Ew7iwo-oYHDcvh97CUPhBxV3zpnE4wROjekuyG0YvFH8weEB5GAkX0Q6mg-ArbLSurUjOP_qrg7t40CW5DoMak8KP7oWTE7WB4g9WOJRhhZFqDsD5Vc3MLfUJH33pMgwXNeuuwa7gb-Dzxjun1bT-ogcg0QvXfa5ogPQs8pBR4fZZAiuSyNvYubcN03Htm4rxrOGcHZ6iZbQFbxUR40Uv6-rN4c84JLKGW8xEUVqYF0JtfJh05Mbtvz5q');"></div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-[#0f0e0a] text-[#bab59c] py-12 border-t border-[#393628]">
+<div class="layout-container max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-2 text-white mb-4">
+<div class="size-8 bg-primary rounded-full flex items-center justify-center text-black">
+<span class="material-symbols-outlined !text-2xl">sports_bar</span>
+</div>
+<h2 class="text-lg font-bold">Zé Delivery</h2>
+</div>
+<p class="text-sm max-w-sm mb-4">
+                        O maior aplicativo de entrega de bebidas do Brasil. Sua bebida gelada, a preço de mercado e na sua porta rapidinho.
+                    </p>
+<div class="flex gap-4">
+<a class="text-white hover:text-primary" href="#"><span class="material-symbols-outlined">social_leaderboard</span></a>
+<a class="text-white hover:text-primary" href="#"><span class="material-symbols-outlined">photo_camera</span></a> <!-- Instagram -->
+<a class="text-white hover:text-primary" href="#"><span class="material-symbols-outlined">alternate_email</span></a> <!-- Twitter/X -->
+</div>
+</div>
+<div>
+<h3 class="text-white font-bold mb-4">Sobre o Zé</h3>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-white" href="#">Quem somos</a></li>
+<li><a class="hover:text-white" href="#">Cidades atendidas</a></li>
+<li><a class="hover:text-white" href="#">Trabalhe conosco</a></li>
+<li><a class="hover:text-white" href="#">Entregador parceiro</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-white font-bold mb-4">Ajuda</h3>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-white" href="#">Central de ajuda</a></li>
+<li><a class="hover:text-white" href="#">Meus pedidos</a></li>
+<li><a class="hover:text-white" href="#">Termos de uso</a></li>
+<li><a class="hover:text-white" href="#">Política de privacidade</a></li>
+</ul>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-[#393628] text-xs text-center md:text-left">
+<p>© 2023 Zé Delivery. Todos os direitos reservados.</p>
+<p class="mt-2 text-[#6b6652]">BEBA COM MODERAÇÃO. VENDA PROIBIDA PARA MENORES DE 18 ANOS.</p>
+</div>
+</div>
+</footer>
+</body></html>

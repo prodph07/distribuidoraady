@@ -1,0 +1,317 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Header } from "@/components/Header";
+import { useCart } from "@/contexts/CartContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+
+export default function CheckoutPage() {
+    const { items, removeFromCart, cartTotal, clearCart } = useCart();
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+
+    // Single Form State
+    const [formData, setFormData] = useState({
+        name: "",
+        phone: "",
+        cep: "",
+        address: "",
+        number: "",
+        complement: "",
+    });
+    const [paymentMethod, setPaymentMethod] = useState("money"); // money or machine
+    const [commitment, setCommitment] = useState(false);
+
+    const hasExchangeItems = items.some((i) => i.is_returnable && i.has_exchange);
+
+    // Load saved data from localStorage on mount
+    useEffect(() => {
+        const savedData = localStorage.getItem("customer_data");
+        if (savedData) {
+            try {
+                setFormData(JSON.parse(savedData));
+            } catch (e) {
+                console.error("Error loading saved data", e);
+            }
+        }
+    }, []);
+
+    const handleRemove = (id: number, hasExchange: boolean) => {
+        removeFromCart(id, hasExchange);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            // 1. Create Order
+            const { data: order, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    status: 'pending_payment',
+                    customer_name: formData.name,
+                    customer_phone: formData.phone,
+                    address: `${formData.address}, ${formData.number} ${formData.complement ? '- ' + formData.complement : ''}`,
+                    total_amount: cartTotal,
+                    payment_id: 'offline', // Placeholder for offline payment
+                })
+                .select()
+                .single();
+
+            if (orderError) throw orderError;
+
+            // 2. Create Order Items
+            const orderItems = items.map(item => ({
+                order_id: order.id,
+                product_id: item.id,
+                quantity: item.quantity,
+                is_exchange: item.has_exchange,
+                price_snapshot: item.is_returnable && !item.has_exchange ? item.price + item.deposit_price : item.price
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItems);
+
+            if (itemsError) throw itemsError;
+
+            // 3. Save for "Magic Link" experience
+            localStorage.setItem("last_order_id", order.id);
+            localStorage.setItem("customer_data", JSON.stringify(formData)); // Remember user for next time
+
+            // 4. Success!
+            clearCart();
+            router.push(`/status/${order.id}`);
+
+        } catch (error: any) {
+            console.error("Error creating order (FULL DETAILS):", JSON.stringify(error, null, 2));
+            alert(`Erro ao criar pedido: ${error.message || "Verifique o console"}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (items.length === 0) {
+        return (
+            <div className="min-h-screen bg-neutral-950 flex flex-col font-sans">
+                <Header />
+                <main className="flex-1 container mx-auto px-4 py-12 flex flex-col items-center justify-center text-center max-w-md">
+                    <div className="bg-neutral-900 p-6 rounded-full mb-6 border border-neutral-800">
+                        <div className="w-16 h-16 text-primary flex items-center justify-center">
+                            <span className="material-symbols-outlined text-5xl">shopping_cart_off</span>
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-black mb-2 text-white">Sua sacola está vazia</h2>
+                    <p className="text-neutral-400 mb-8">Bora encher essa geladeira? Temos cervejas geladinhas esperando por você!</p>
+                    <Link href="/" className="w-full">
+                        <Button className="w-full h-12 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-primary text-black hover:bg-yellow-400">
+                            VOLTAR PARA A LOJA
+                        </Button>
+                    </Link>
+                </main>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-neutral-950 flex flex-col font-sans pb-24 text-neutral-200">
+            <Header />
+
+            <main className="flex-1 container mx-auto px-4 py-6 max-w-lg">
+                <div className="flex items-center gap-2 mb-6">
+                    <Link href="/" className="bg-neutral-800 p-2 rounded-full shadow-sm hover:bg-neutral-700 transition-colors">
+                        <span className="material-symbols-outlined text-white">arrow_back</span>
+                    </Link>
+                    <h1 className="text-2xl font-black text-white tracking-tight">Finalizar Pedido</h1>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* SECTION 1: WHO ARE YOU? */}
+                    <section className="bg-neutral-900 p-6 rounded-3xl shadow-sm border border-neutral-800">
+                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                            <User className="w-5 h-5 text-primary" /> Seus Dados
+                        </h2>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="phone" className="font-bold pl-1 text-xs uppercase text-neutral-500">Celular (WhatsApp)</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-3.5 w-5 h-5 text-neutral-500" />
+                                    <Input
+                                        id="phone"
+                                        required
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                        placeholder="(11) 99999-9999"
+                                        className="pl-10 rounded-xl h-12 bg-neutral-800 border-neutral-700 focus:ring-primary focus:border-primary font-bold text-lg text-white placeholder:text-neutral-600"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-neutral-500 mt-1 pl-1">Usaremos seu número para acompanhar o pedido.</p>
+                            </div>
+                            <div>
+                                <Label htmlFor="name" className="font-bold pl-1 text-xs uppercase text-neutral-500">Nome Completo</Label>
+                                <Input
+                                    id="name"
+                                    required
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder="Ex: João da Silva"
+                                    className="rounded-xl h-12 bg-neutral-800 border-neutral-700 focus:ring-primary focus:border-primary text-white placeholder:text-neutral-600"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECTION 2: WHERE? */}
+                    <section className="bg-neutral-900 p-6 rounded-3xl shadow-sm border border-neutral-800">
+                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                            <MapPin className="w-5 h-5 text-primary" /> Entrega
+                        </h2>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-4 gap-3">
+                                <div className="col-span-3">
+                                    <Label htmlFor="address" className="font-bold pl-1 text-xs uppercase text-neutral-500">Endereço</Label>
+                                    <Input
+                                        id="address"
+                                        required
+                                        value={formData.address}
+                                        onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                        placeholder="Rua, Avenida..."
+                                        className="rounded-xl h-12 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-600"
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <Label htmlFor="number" className="font-bold pl-1 text-xs uppercase text-neutral-500">Nº</Label>
+                                    <Input
+                                        id="number"
+                                        required
+                                        value={formData.number}
+                                        onChange={e => setFormData({ ...formData, number: e.target.value })}
+                                        placeholder="123"
+                                        className="rounded-xl h-12 bg-neutral-800 border-neutral-700 text-center font-bold text-white placeholder:text-neutral-600"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="complement" className="font-bold pl-1 text-xs uppercase text-neutral-500">Complemento (Opcional)</Label>
+                                <Input
+                                    id="complement"
+                                    value={formData.complement}
+                                    onChange={e => setFormData({ ...formData, complement: e.target.value })}
+                                    placeholder="Apto, Bloco, Ponto de ref..."
+                                    className="rounded-xl h-12 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-600"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECTION 3: RULES & SUMMARY */}
+                    <section className="space-y-4">
+                        {/* Exchange Alert */}
+                        {hasExchangeItems && (
+                            <div className="bg-yellow-900/20 border-2 border-yellow-700/50 rounded-2xl p-5 space-y-3 relative overflow-hidden">
+                                <div className="absolute -right-4 -top-4 w-20 h-20 bg-yellow-600 rounded-full opacity-10" />
+                                <div className="flex items-start gap-4">
+                                    <div className="bg-yellow-900/40 p-2 rounded-full shrink-0">
+                                        <AlertTriangle className="w-6 h-6 text-yellow-500" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-black text-yellow-500 text-lg">Troca de Cascos</h3>
+                                        <p className="text-sm text-yellow-200/80 font-medium leading-relaxed">
+                                            Você tem garrafas vazias para entregar?
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-3 pt-2 bg-black/20 p-3 rounded-xl border border-yellow-900/30">
+                                    <input
+                                        id="commitment"
+                                        type="checkbox"
+                                        required
+                                        checked={commitment}
+                                        onChange={e => setCommitment(e.target.checked)}
+                                        className="h-5 w-5 rounded-md border-yellow-600 bg-neutral-900 text-yellow-500 focus:ring-yellow-500 cursor-pointer"
+                                    />
+                                    <label htmlFor="commitment" className="text-sm font-bold text-yellow-500 cursor-pointer">
+                                        Sim, tenho os cascos para troca!
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Payment & Total */}
+                        <div className="bg-neutral-900 p-6 rounded-3xl shadow-sm border border-neutral-800">
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                                <Banknote className="w-5 h-5 text-primary" /> Pagamento
+                            </h2>
+
+                            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-3 mb-6">
+                                <div
+                                    className={cn(
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center",
+                                        paymentMethod === 'machine'
+                                            ? "border-primary bg-primary/10 text-white"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400 hover:border-neutral-700"
+                                    )}
+                                    onClick={() => setPaymentMethod("machine")}
+                                >
+                                    <RadioGroupItem value="machine" id="machine" className="sr-only" />
+                                    <CreditCard className={cn("w-6 h-6", paymentMethod === 'machine' ? "text-primary" : "text-neutral-500")} />
+                                    <span className="font-bold text-sm">Maquininha</span>
+                                </div>
+
+                                <div
+                                    className={cn(
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center",
+                                        paymentMethod === 'money'
+                                            ? "border-primary bg-primary/10 text-white"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400 hover:border-neutral-700"
+                                    )}
+                                    onClick={() => setPaymentMethod("money")}
+                                >
+                                    <RadioGroupItem value="money" id="money" className="sr-only" />
+                                    <Banknote className={cn("w-6 h-6", paymentMethod === 'money' ? "text-green-500" : "text-neutral-500")} />
+                                    <span className="font-bold text-sm">Dinheiro</span>
+                                </div>
+                            </RadioGroup>
+
+                            <div className="flex justify-between items-center pt-4 border-t border-neutral-800">
+                                <span className="text-neutral-400 font-medium">Total a pagar</span>
+                                <span className="text-2xl font-black text-primary">R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* BIG BUTTON */}
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-900 border-t border-neutral-800 shadow-[0_-4px_10px_rgba(0,0,0,0.2)] z-10 md:relative md:bg-transparent md:border-t-0 md:shadow-none md:p-0">
+                        <Button
+                            type="submit"
+                            disabled={(hasExchangeItems && !commitment) || loading}
+                            className="w-full h-16 rounded-2xl font-black text-xl bg-primary text-black hover:bg-yellow-400 shadow-xl shadow-yellow-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                "ENVIANDO..."
+                            ) : (
+                                <>
+                                    <span>FAZER PEDIDO</span>
+                                    <Zap className="w-5 h-5 fill-black" />
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                    {/* Spacer for fixed bottom button on mobile */}
+                    <div className="h-20 md:hidden" />
+                </form>
+            </main>
+        </div>
+    );
+}

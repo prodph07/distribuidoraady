@@ -1,0 +1,54 @@
+import { Product } from "@/types";
+
+export const MOCK_PRODUCTS: Product[] = [
+    {
+        id: 1,
+        name: "Skol 600ml",
+        description: "Pilsen, garrafa retornável.",
+        image_url: "https://images.unsplash.com/photo-1625126596395-92736e4f1659?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+        price: 7.00,
+        deposit_price: 2.00,
+        is_returnable: true,
+        in_stock: true,
+    },
+    {
+        id: 2,
+        name: "Brahma 600ml",
+        description: "O sabor que todo mundo ama.",
+        image_url: "https://images.unsplash.com/photo-1606757656910-66487e492ced?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+        price: 7.50,
+        deposit_price: 2.00,
+        is_returnable: true,
+        in_stock: true,
+    },
+    {
+        id: 3,
+        name: "Heineken 600ml",
+        description: "Premium Quality.",
+        image_url: "https://images.unsplash.com/photo-1618183133644-8cb3b854af9a?w=500&auto=format&fit=crop&q=60",
+        price: 10.00,
+        deposit_price: 2.00,
+        is_returnable: true,
+        in_stock: true,
+    },
+    {
+        id: 4,
+        name: "Coca-Cola 2L",
+        description: "Sabor original.",
+        image_url: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=60",
+        price: 12.00,
+        deposit_price: 0,
+        is_returnable: false,
+        in_stock: true,
+    },
+    {
+        id: 5,
+        name: "Água S/ Gás 500ml",
+        description: "Hidratação essencial.",
+        image_url: "https://images.unsplash.com/photo-1563823485-61849202022b?w=500&auto=format&fit=crop&q=60",
+        price: 3.00,
+        deposit_price: 0,
+        is_returnable: false,
+        in_stock: true,
+    }
+];
