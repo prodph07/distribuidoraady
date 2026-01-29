@@ -1,4 +1,5 @@
-import { Order, AdminOrderCard } from "./AdminOrderCard";
+import { AdminOrderCard } from "./AdminOrderCard";
+import { Order } from "@/types";
 
 interface KanbanBoardProps {
     orders: Order[];
