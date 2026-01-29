@@ -2,6 +2,8 @@
 import { preference } from "@/lib/mercadopago";
 import { NextResponse } from "next/server";
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
     try {
         const { items, payer } = await req.json();

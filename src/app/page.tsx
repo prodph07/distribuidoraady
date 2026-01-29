@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
 export const revalidate = 0; // Disable cache for demo purposes
+export const runtime = 'edge';
 
 export default async function Home() {
   // Fetch all products
@@ -87,8 +88,8 @@ export default async function Home() {
               <button
                 key={cat.label}
                 className={`flex shrink-0 items-center justify-center gap-2 rounded-full px-5 h-10 font-bold transition-all ${i === 0 // Just highlighting first for demo
-                    ? "bg-primary text-black hover:brightness-110"
-                    : "bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700"
+                  ? "bg-primary text-black hover:brightness-110"
+                  : "bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700"
                   }`}
               >
                 <span>{cat.label}</span>

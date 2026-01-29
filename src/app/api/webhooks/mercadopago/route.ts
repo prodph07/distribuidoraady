@@ -3,6 +3,8 @@ import { payment } from "@/lib/mercadopago";
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
     try {
         const url = new URL(req.url);
