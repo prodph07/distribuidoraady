@@ -10,6 +10,7 @@ export const MOCK_PRODUCTS: Product[] = [
         deposit_price: 2.00,
         is_returnable: true,
         in_stock: true,
+        stock_quantity: 100,
     },
     {
         id: 2,
@@ -20,6 +21,7 @@ export const MOCK_PRODUCTS: Product[] = [
         deposit_price: 2.00,
         is_returnable: true,
         in_stock: true,
+        stock_quantity: 100,
     },
     {
         id: 3,
@@ -30,6 +32,7 @@ export const MOCK_PRODUCTS: Product[] = [
         deposit_price: 2.00,
         is_returnable: true,
         in_stock: true,
+        stock_quantity: 100,
     },
     {
         id: 4,
@@ -40,6 +43,7 @@ export const MOCK_PRODUCTS: Product[] = [
         deposit_price: 0,
         is_returnable: false,
         in_stock: true,
+        stock_quantity: 100,
     },
     {
         id: 5,
@@ -50,5 +54,6 @@ export const MOCK_PRODUCTS: Product[] = [
         deposit_price: 0,
         is_returnable: false,
         in_stock: true,
+        stock_quantity: 100,
     }
 ];
