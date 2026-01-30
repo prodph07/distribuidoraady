@@ -51,3 +51,38 @@ export interface Order {
     order_items?: OrderItem[];
     total?: number; // legacy prop compatibility if needed, or alias total_amount
 }
+
+export interface Banner {
+    id: number;
+    title?: string;
+    image_url: string;
+    link_url?: string;
+    position: 'main' | 'secondary';
+    order_index: number;
+    active: boolean;
+}
+
+export interface Collection {
+    id: number;
+    title: string;
+    slug: string;
+    description?: string;
+    image_url?: string;
+    active: boolean;
+    featured: boolean;
+}
+
+export interface CollectionItem {
+    id: number;
+    collection_id: number;
+    product_id: number;
+    product?: Product;
+}
+
+export interface HomeSection {
+    slug: string; // 'coupon', 'categories', 'carnaval', etc.
+    name: string;
+    active: boolean;
+    config: Record<string, any>; // { title, subtitle, image_url, etc. }
+    order_index: number;
+}

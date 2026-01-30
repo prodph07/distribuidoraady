@@ -7,7 +7,7 @@ import { Product, Order, Category, Subcategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil } from "lucide-react";
+import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { ProductFormDialog } from "@/components/admin/ProductFormDialog";
+import { HomeConfigTab } from "@/components/admin/HomeConfigTab";
 import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
@@ -43,7 +45,9 @@ export default function AdminDashboard() {
     const [realtimeStatus, setRealtimeStatus] = useState<string>("Conectando...");
     const [audioLocked, setAudioLocked] = useState(true); // Default to true to force initial interaction
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-    const [mainSection, setMainSection] = useState<'orders' | 'stock' | 'settings'>('orders');
+    const [mainSection, setMainSection] = useState<'orders' | 'stock' | 'couriers' | 'analytics' | 'settings' | 'home-config'>('orders');
+    const [couriers, setCouriers] = useState<any[]>([]);
+    const [showStockAlert, setShowStockAlert] = useState(true);
 
     // KPIs
     const totalRevenue = orders.reduce((acc, order) => acc + (order.total || 0), 0);
@@ -141,6 +145,15 @@ export default function AdminDashboard() {
             setOrders(ordersData as any);
         }
     };
+
+    const fetchCouriers = async () => {
+        const { data } = await supabase.from('couriers').select('*').order('name');
+        if (data) setCouriers(data);
+    };
+
+    useEffect(() => {
+        if (mainSection === 'couriers') fetchCouriers();
+    }, [mainSection]);
 
     const toggleStock = async (id: number, currentStatus: boolean) => {
         setProducts(prev => prev.map(p => p.id === id ? { ...p, in_stock: !currentStatus } : p));
@@ -349,6 +362,30 @@ export default function AdminDashboard() {
                                 </div>
                             </button>
                             <button
+                                onClick={() => setMainSection('couriers')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'couriers'
+                                    ? 'bg-neutral-700 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Truck size={16} />
+                                    <span>Motoboys</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setMainSection('analytics')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'analytics'
+                                    ? 'bg-neutral-700 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <PieChart size={16} />
+                                    <span>Relatórios</span>
+                                </div>
+                            </button>
+                            <button
                                 onClick={() => setMainSection('settings')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'settings'
                                     ? 'bg-neutral-700 text-white shadow-sm'
@@ -358,6 +395,18 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-2">
                                     <Settings size={16} />
                                     <span>Config</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setMainSection('home-config')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'home-config'
+                                    ? 'bg-neutral-700 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Grid size={16} />
+                                    <span>Vitrine</span>
                                 </div>
                             </button>
                         </nav>
@@ -400,28 +449,30 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-            </header>
+            </header >
 
             {/* Audio Unlock Overlay */}
-            {audioLocked && (
-                <div
-                    className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center cursor-pointer backdrop-blur-sm"
-                    onClick={unlockAudio}
-                >
-                    <div className="bg-neutral-800 p-8 rounded-2xl border border-neutral-700 text-center space-y-4 max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
-                        <div className="bg-primary/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                            <span className="text-4xl">🔊</span>
+            {
+                audioLocked && (
+                    <div
+                        className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center cursor-pointer backdrop-blur-sm"
+                        onClick={unlockAudio}
+                    >
+                        <div className="bg-neutral-800 p-8 rounded-2xl border border-neutral-700 text-center space-y-4 max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
+                            <div className="bg-primary/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                                <span className="text-4xl">🔊</span>
+                            </div>
+                            <h2 className="text-2xl font-bold text-white">Clique para Ativar o Som</h2>
+                            <p className="text-neutral-400">
+                                O navegador bloqueou o áudio automático. Clique em qualquer lugar para autorizar os alertas sonoros de novos pedidos.
+                            </p>
+                            <Button className="w-full font-bold text-lg bg-primary text-black hover:bg-yellow-400 mt-4">
+                                ATIVAR MONITORAMENTO
+                            </Button>
                         </div>
-                        <h2 className="text-2xl font-bold text-white">Clique para Ativar o Som</h2>
-                        <p className="text-neutral-400">
-                            O navegador bloqueou o áudio automático. Clique em qualquer lugar para autorizar os alertas sonoros de novos pedidos.
-                        </p>
-                        <Button className="w-full font-bold text-lg bg-primary text-black hover:bg-yellow-400 mt-4">
-                            ATIVAR MONITORAMENTO
-                        </Button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <main className="container mx-auto p-6 space-y-8">
 
@@ -524,7 +575,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* MAIN SECTION: STOCK */}
                 {mainSection === 'stock' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
@@ -748,207 +798,208 @@ export default function AdminDashboard() {
                                 ))}
 
                                 {/* Add Product Card (Button trigger for Modal) */}
-                                <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-                                    <DialogTrigger asChild>
-                                        <button
-                                            onClick={openAddModal}
-                                            className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-neutral-800 hover:border-primary/50 hover:bg-primary/5 transition-all group h-full min-h-[160px]"
-                                        >
-                                            <div className="h-10 w-10 rounded-full bg-neutral-800 group-hover:bg-primary text-neutral-500 group-hover:text-black flex items-center justify-center mb-2 transition-colors">
-                                                <Plus size={24} />
-                                            </div>
-                                            <span className="font-bold text-neutral-500 group-hover:text-primary">Adicionar Produto</span>
-                                        </button>
-                                    </DialogTrigger>
-                                    <DialogContent className="bg-neutral-900 border-neutral-800 text-neutral-100">
-                                        <DialogHeader>
-                                            <DialogTitle>{editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}</DialogTitle>
-                                            <DialogDescription className="text-neutral-400">
-                                                {editingProduct ? "Atualize os dados do produto." : "Preencha os dados da cerveja para adicionar ao catálogo."}
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <form onSubmit={handleSaveProduct} className="space-y-4 mt-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="name">Nome do Produto</Label>
-                                                <Input
-                                                    id="name"
-                                                    name="name"
-                                                    defaultValue={editingProduct?.name}
-                                                    placeholder="Ex: Skol 300ml"
-                                                    className="bg-neutral-800 border-neutral-700 text-white"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="category">Categoria</Label>
-                                                    <select
-                                                        id="category"
-                                                        name="category"
-                                                        defaultValue={editingProduct?.category || ""}
-                                                        className="flex h-10 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {categories.map(c => (
-                                                            <option key={c.id} value={c.name}>{c.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="subcategory">Subcategoria</Label>
-                                                    <select
-                                                        id="subcategory"
-                                                        name="subcategory"
-                                                        defaultValue={editingProduct?.subcategory || ""}
-                                                        className="flex h-10 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {subcategories.map(sc => (
-                                                            <option key={sc.id} value={sc.name}>{sc.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 mb-4 bg-neutral-800 p-3 rounded-lg border border-neutral-700">
-                                                <input type="hidden" name="is_returnable" value={isReturnable ? "on" : "off"} />
-                                                <Switch
-                                                    checked={isReturnable}
-                                                    onCheckedChange={setIsReturnable}
-                                                    id="is_returnable"
-                                                />
-                                                <Label htmlFor="is_returnable" className="cursor-pointer">
-                                                    Porduto Retornável? (Cobrar Casco)
-                                                </Label>
-                                            </div>
+                                <button
+                                    onClick={openAddModal}
+                                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-neutral-800 hover:border-primary/50 hover:bg-primary/5 transition-all group h-full min-h-[160px]"
+                                >
+                                    <div className="h-10 w-10 rounded-full bg-neutral-800 group-hover:bg-primary text-neutral-500 group-hover:text-black flex items-center justify-center mb-2 transition-colors">
+                                        <Plus size={24} />
+                                    </div>
+                                    <span className="font-bold text-neutral-500 group-hover:text-primary">Adicionar Produto</span>
+                                </button>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {/* Liquid / Base Inputs */}
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="price">{isReturnable ? "Venda (Líquido/Refil)" : "Preço Venda (R$)"}</Label>
-                                                    <Input
-                                                        id="price"
-                                                        name="price"
-                                                        type="number"
-                                                        step="0.01"
-                                                        defaultValue={editingProduct?.price}
-                                                        placeholder="0.00"
-                                                        className="bg-neutral-800 border-neutral-700 text-white"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="cost_price">{isReturnable ? "Custo (Líquido)" : "Preço Custo (R$)"}</Label>
-                                                    <Input
-                                                        id="cost_price"
-                                                        name="cost_price"
-                                                        type="number"
-                                                        step="0.01"
-                                                        defaultValue={editingProduct?.cost_price || ""}
-                                                        placeholder="0.00"
-                                                        className="bg-neutral-800 border-neutral-700 text-white"
-                                                    />
-                                                </div>
-
-                                                {/* Returnable Extra Inputs */}
-                                                {isReturnable && (
-                                                    <>
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="deposit_price" className="text-yellow-400">Venda do Casco (Depósito)</Label>
-                                                            <Input
-                                                                id="deposit_price"
-                                                                name="deposit_price"
-                                                                type="number"
-                                                                step="0.01"
-                                                                defaultValue={editingProduct?.deposit_price || ""}
-                                                                placeholder="Ex: 5.00"
-                                                                className="bg-neutral-800 border-yellow-500/30 text-white"
-                                                            />
-                                                        </div>
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="bottle_cost" className="text-yellow-400">Custo do Casco</Label>
-                                                            <Input
-                                                                id="bottle_cost"
-                                                                name="bottle_cost"
-                                                                type="number"
-                                                                step="0.01"
-                                                                defaultValue={editingProduct?.bottle_cost || ""}
-                                                                placeholder="Ex: 2.50"
-                                                                className="bg-neutral-800 border-yellow-500/30 text-white"
-                                                            />
-                                                        </div>
-                                                    </>
-                                                )}
-
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="stock_quantity">Qtd Inicial</Label>
-                                                    <Input
-                                                        id="stock_quantity"
-                                                        name="stock_quantity"
-                                                        type="number"
-                                                        defaultValue={editingProduct?.stock_quantity || 0}
-                                                        placeholder="0"
-                                                        className="bg-neutral-800 border-neutral-700 text-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="image_url">URL da Imagem</Label>
-                                                <Input
-                                                    id="image_url"
-                                                    name="image_url"
-                                                    defaultValue={editingProduct?.image_url}
-                                                    placeholder="https://..."
-                                                    className="bg-neutral-800 border-neutral-700 text-white"
-                                                />
-                                            </div>
-
-                                            <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold">
-                                                {editingProduct ? "Atualizar Produto" : "Salvar Produto"}
-                                            </Button>
-                                        </form>
-                                    </DialogContent>
-                                </Dialog>
+                                <ProductFormDialog
+                                    isOpen={isProductModalOpen}
+                                    onOpenChange={setIsProductModalOpen}
+                                    editingProduct={editingProduct}
+                                    categories={categories}
+                                    subcategories={subcategories}
+                                    onSave={handleSaveProduct}
+                                />
                             </div>
                         </div>
                     </div>
                 )}
+
+                {/* MAIN SECTION: HOME CONFIG */}
+                {mainSection === 'home-config' && (
+                    <HomeConfigTab products={products} />
+                )}
+
+                {/* MAIN SECTION: COURIERS */}
+                {
+                    mainSection === 'couriers' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Truck className="w-6 h-6 text-primary" /> Motoboys Parceiros
+                                    </h2>
+                                    <Button size="sm" className="bg-primary text-black hover:bg-yellow-500 font-bold" onClick={() => alert("Funcionalidade de adicionar motoboy será implementada no backend")}>
+                                        <Plus size={16} className="mr-2" /> Novo Motoboy
+                                    </Button>
+                                </div>
+
+                                <div className="grid gap-4">
+                                    {couriers.length === 0 ? (
+                                        <div className="text-center py-12 bg-neutral-900 rounded-xl border border-dashed border-neutral-800">
+                                            <Truck className="w-12 h-12 text-neutral-700 mx-auto mb-3" />
+                                            <p className="text-neutral-500">Nenhum motoboy cadastrado ainda.</p>
+                                            <p className="text-xs text-neutral-600 mt-1">Cadastre os parceiros para gerenciar as entregas.</p>
+                                        </div>
+                                    ) : (
+                                        couriers.map(courier => (
+                                            <div key={courier.id} className="bg-neutral-900 p-4 rounded-lg border border-neutral-800 flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="font-bold text-lg">{courier.name}</h3>
+                                                    <p className="text-sm text-neutral-500">{courier.phone} • {courier.vehicle_type}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${courier.is_active ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}>
+                                                        {courier.is_active ? "ATIVO" : "INATIVO"}
+                                                    </span>
+                                                    <Button variant="ghost" size="sm">Editar</Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* MAIN SECTION: ANALYTICS (Reports) */}
+                {
+                    mainSection === 'analytics' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
+
+                            {/* Stock Alert Widget */}
+                            {products.some(p => (p.stock_quantity || 0) < 10) && (
+                                <div className="bg-red-900/20 border border-red-900/50 p-4 rounded-xl flex items-start gap-4">
+                                    <div className="bg-red-900/50 p-2 rounded-full text-red-200 shrink-0">
+                                        <AlertTriangle size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-red-200">Alerta de Estoque Baixo</h3>
+                                        <p className="text-sm text-red-300/70 mb-2">Os seguintes produtos estão acabando:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {products.filter(p => (p.stock_quantity || 0) < 10).map(p => (
+                                                <span key={p.id} className="text-xs bg-red-950/50 text-red-200 px-2 py-1 rounded border border-red-900/50">
+                                                    {p.name} ({p.stock_quantity})
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Heatmap (Top Locations) */}
+                                <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
+                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+                                        <MapPin className="w-5 h-5 text-primary" /> Top Bairros
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {/* Mock Analytics Logic - Group by Address content */}
+                                        {Object.entries(
+                                            orders.reduce((acc: any, order) => {
+                                                // Simple clustering by taking first 15 chars of address or splitting by ','
+                                                const district = order.address ? order.address.split(',')[1]?.trim() || "Centro" : "Retirada";
+                                                acc[district] = (acc[district] || 0) + 1;
+                                                return acc;
+                                            }, {})
+                                        )
+                                            .sort(([, a], [, b]) => (b as number) - (a as number))
+                                            .slice(0, 5)
+                                            .map(([district, count], i) => (
+                                                <div key={district} className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-bold text-neutral-500 w-4 text-center">{i + 1}</span>
+                                                        <span className="text-neutral-200">{district}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-24 h-2 bg-neutral-700 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-primary"
+                                                                style={{ width: `${((count as number) / totalOrders) * 100}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs text-neutral-400 font-mono w-6 text-right">{count as number}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        {orders.length === 0 && <p className="text-neutral-500 text-sm">Sem dados suficientes.</p>}
+                                    </div>
+                                </div>
+
+                                {/* Profit Estimator */}
+                                <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
+                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+                                        <DollarSign className="w-5 h-5 text-green-500" /> Estimativa de Lucro
+                                    </h3>
+                                    <div className="flex flex-col gap-4">
+                                        <div className="p-4 bg-neutral-900 rounded-lg">
+                                            <span className="text-neutral-500 text-xs uppercase font-bold">Faturamento Bruto</span>
+                                            <div className="text-2xl font-bold text-white">R$ {totalRevenue.toFixed(2)}</div>
+                                        </div>
+                                        <div className="p-4 bg-neutral-900 rounded-lg">
+                                            <span className="text-neutral-500 text-xs uppercase font-bold">Custo Estimado (Produtos)</span>
+                                            {/* Mock Calculation: Assume 60% is cost if not set, or sum product costs */}
+                                            <div className="text-2xl font-bold text-red-400">
+                                                - R$ {(totalRevenue * 0.6).toFixed(2)}
+                                                <span className="text-xs text-neutral-600 ml-2 font-normal">(aprox. 60%)</span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-green-900/20 border border-green-900/50 rounded-lg">
+                                            <span className="text-green-500 text-xs uppercase font-bold">Lucro Líquido Estimado</span>
+                                            <div className="text-3xl font-black text-green-400">R$ {(totalRevenue * 0.4).toFixed(2)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
 
                 {/* MAIN SECTION: SETTINGS */}
-                {mainSection === 'settings' && (
-                    <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="bg-neutral-800 p-8 rounded-xl border border-neutral-700">
-                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 border-b border-neutral-700 pb-4">
-                                <Settings className="w-6 h-6 text-primary" /> Configurações
-                            </h2>
+                {
+                    mainSection === 'settings' && (
+                        <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <div className="bg-neutral-800 p-8 rounded-xl border border-neutral-700">
+                                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 border-b border-neutral-700 pb-4">
+                                    <Settings className="w-6 h-6 text-primary" /> Configurações
+                                </h2>
 
-                            <div className="space-y-8">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <label className="text-lg font-semibold block text-neutral-200">Sons de Notificação</label>
-                                        <p className="text-neutral-400">Reproduzir alerta sonoro quando novos pedidos chegarem.</p>
+                                <div className="space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <label className="text-lg font-semibold block text-neutral-200">Sons de Notificação</label>
+                                            <p className="text-neutral-400">Reproduzir alerta sonoro quando novos pedidos chegarem.</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Label htmlFor="sound-mode" className="text-neutral-300 font-bold">
+                                                {soundEnabled ? "ATIVADO" : "DESATIVADO"}
+                                            </Label>
+                                            <Switch
+                                                id="sound-mode"
+                                                checked={soundEnabled}
+                                                onCheckedChange={setSoundEnabled}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <Label htmlFor="sound-mode" className="text-neutral-300 font-bold">
-                                            {soundEnabled ? "ATIVADO" : "DESATIVADO"}
-                                        </Label>
-                                        <Switch
-                                            id="sound-mode"
-                                            checked={soundEnabled}
-                                            onCheckedChange={setSoundEnabled}
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="p-4 bg-neutral-900/50 rounded-lg border border-neutral-800">
-                                    <h3 className="font-bold text-neutral-300 mb-2">Sobre o Sistema</h3>
-                                    <p className="text-sm text-neutral-500">Versão: 1.0.0 (Admin 4.0)</p>
-                                    <p className="text-sm text-neutral-500">Ambiente: {process.env.NODE_ENV}</p>
+                                    <div className="p-4 bg-neutral-900/50 rounded-lg border border-neutral-800">
+                                        <h3 className="font-bold text-neutral-300 mb-2">Sobre o Sistema</h3>
+                                        <p className="text-sm text-neutral-500">Versão: 1.0.0 (Admin 4.0)</p>
+                                        <p className="text-sm text-neutral-500">Ambiente: {process.env.NODE_ENV}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                    )
+                }
+            </main >
+        </div >
     );
 }

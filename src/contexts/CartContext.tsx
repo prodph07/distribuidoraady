@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { CartItem, Product } from "@/types";
 
 interface CartContextType {
@@ -55,14 +55,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
     };
 
-    const cartTotal = items.reduce((total, item) => {
-        const unitPrice = item.has_exchange || !item.is_returnable
-            ? item.price
-            : item.price + item.deposit_price;
+    const cartTotal = useMemo(() => items.reduce((total, item) => {
+        // Always use the base price (liquid price) - deposit is no longer charged
+        const unitPrice = item.price;
         return total + unitPrice * item.quantity;
-    }, 0);
+    }, 0), [items]);
 
-    const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
+    const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
 
     const clearCart = () => setItems([]);
 

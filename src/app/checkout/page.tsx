@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { ProductCard } from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, Zap } from "lucide-react";
+import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, Zap, ShoppingBag, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-    const { items, removeFromCart, cartTotal, clearCart } = useCart();
+    const { items, removeFromCart, cartTotal, clearCart, addToCart } = useCart();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
@@ -100,23 +101,55 @@ export default function CheckoutPage() {
         }
     };
 
+    const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            // Simple logic: just get 4 random-ish products (or first 4)
+            const { data } = await supabase.from('products').select('*').limit(4);
+            if (data) setRecommendedProducts(data);
+        };
+        fetchRecommendations();
+    }, []);
+
     if (items.length === 0) {
         return (
             <div className="min-h-screen bg-neutral-950 flex flex-col font-sans">
                 <Header />
-                <main className="flex-1 container mx-auto px-4 py-12 flex flex-col items-center justify-center text-center max-w-md">
-                    <div className="bg-neutral-900 p-6 rounded-full mb-6 border border-neutral-800">
-                        <div className="w-16 h-16 text-primary flex items-center justify-center">
-                            <span className="material-symbols-outlined text-5xl">shopping_cart_off</span>
+                <main className="flex-1 container mx-auto px-4 py-8 flex flex-col max-w-4xl">
+
+                    <div className="flex flex-col items-center justify-center text-center mb-12 animate-in fade-in zoom-in duration-500">
+                        <div className="bg-neutral-900 p-6 rounded-full mb-6 border border-neutral-800 relative group">
+                            <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/20 transition-all" />
+                            <div className="w-16 h-16 text-neutral-600 flex items-center justify-center relative z-10">
+                                <ShoppingBag className="w-12 h-12" />
+                            </div>
                         </div>
+                        <h2 className="text-2xl font-black mb-2 text-white">Sua sacola está vazia</h2>
+                        <p className="text-neutral-400 mb-8 max-w-md mx-auto">Que tal aproveitar e pedir aquela cerveja gelada ou um petisco para acompanhar?</p>
+                        <Link href="/">
+                            <Button className="h-12 px-8 rounded-full font-bold text-base shadow-lg hover:shadow-primary/20 transition-all hover:scale-105 bg-primary text-black hover:bg-yellow-400">
+                                VER CARDÁPIO COMPLETO
+                            </Button>
+                        </Link>
                     </div>
-                    <h2 className="text-2xl font-black mb-2 text-white">Sua sacola está vazia</h2>
-                    <p className="text-neutral-400 mb-8">Bora encher essa geladeira? Temos cervejas geladinhas esperando por você!</p>
-                    <Link href="/" className="w-full">
-                        <Button className="w-full h-12 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-primary text-black hover:bg-yellow-400">
-                            VOLTAR PARA A LOJA
-                        </Button>
-                    </Link>
+
+                    {/* Recommendations for Empty State */}
+                    {recommendedProducts.length > 0 && (
+                        <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-700 delay-150">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <span className="bg-primary w-2 h-6 rounded-full inline-block" />
+                                Sugestões para você
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                {recommendedProducts.map(product => (
+                                    <div key={product.id} className="transform hover:-translate-y-1 transition-transform duration-300">
+                                        <ProductCard product={product} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </main>
             </div>
         );
@@ -129,12 +162,82 @@ export default function CheckoutPage() {
             <main className="flex-1 container mx-auto px-4 py-6 max-w-lg">
                 <div className="flex items-center gap-2 mb-6">
                     <Link href="/" className="bg-neutral-800 p-2 rounded-full shadow-sm hover:bg-neutral-700 transition-colors">
-                        <span className="material-symbols-outlined text-white">arrow_back</span>
+                        <ArrowLeft className="w-6 h-6 text-white" />
                     </Link>
                     <h1 className="text-2xl font-black text-white tracking-tight">Finalizar Pedido</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* SECTION 0: REVIEW CART */}
+                    <section className="bg-neutral-900 p-6 rounded-3xl shadow-sm border border-neutral-800">
+                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                            <ShoppingBag className="w-5 h-5 text-primary" /> Revisar Pedido
+                        </h2>
+                        <div className="space-y-4">
+                            {items.map((item) => (
+                                <div key={`${item.id}-${item.has_exchange}`} className="flex gap-4 items-center bg-neutral-950/50 p-3 rounded-xl border border-neutral-800/50">
+                                    <div className="relative w-16 h-16 bg-white rounded-lg p-1 shrink-0">
+                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-contain" />
+                                        {item.is_returnable && (
+                                            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center bg-red-500 text-[8px] text-white font-bold" title="Retornável">R</div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-neutral-200 text-sm leading-tight line-clamp-2">{item.name}</h3>
+                                        <p className="text-xs text-neutral-500 mt-1">
+                                            {item.is_returnable ? (
+                                                item.has_exchange ? (
+                                                    <span className="text-yellow-500 flex items-center gap-1"><AlertTriangle size={10} /> Com troca</span>
+                                                ) : (
+                                                    <span className="text-green-500">Comprando casco</span>
+                                                )
+                                            ) : (
+                                                <span>Unidade</span>
+                                            )}
+                                        </p>
+                                        <div className="font-bold text-primary mt-1">
+                                            R$ {(item.has_exchange || !item.is_returnable ? item.price : item.price + item.deposit_price).toFixed(2).replace('.', ',')}
+                                        </div>
+                                    </div>
+
+                                    {/* Quantity Controls */}
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div className="flex items-center bg-neutral-800 rounded-lg p-1 border border-neutral-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (item.quantity > 1) {
+                                                        addToCart(item, -1, item.has_exchange);
+                                                    } else {
+                                                        handleRemove(item.id, item.has_exchange);
+                                                    }
+                                                }}
+                                                className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-700 rounded transition-colors"
+                                            >
+                                                -
+                                            </button>
+                                            <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => addToCart(item, 1, item.has_exchange)}
+                                                className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-700 rounded transition-colors"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemove(item.id, item.has_exchange)}
+                                            className="text-xs text-red-500/70 hover:text-red-500 underline decoration-red-500/30 underline-offset-2 transition-colors"
+                                        >
+                                            Remover
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
 
                     {/* SECTION 1: WHO ARE YOU? */}
                     <section className="bg-neutral-900 p-6 rounded-3xl shadow-sm border border-neutral-800">
@@ -290,6 +393,36 @@ export default function CheckoutPage() {
                             </div>
                         </div>
                     </section>
+
+                    {/* SECTION 2.5: RELATED PRODUCTS (UPSELL) */}
+                    {recommendedProducts.filter(p => !items.some(i => i.id === p.id)).length > 0 && (
+                        <section className="space-y-4 pt-4 mb-24 md:mb-6">
+                            <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider pl-2">Aproveite também</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {recommendedProducts.filter(p => !items.some(i => i.id === p.id)).slice(0, 2).map(product => (
+                                    <div key={product.id} className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 flex flex-col gap-2">
+                                        <div className="relative aspect-square w-full bg-white rounded-lg p-2 flex items-center justify-center">
+                                            <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white text-sm line-clamp-1">{product.name}</p>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-primary font-bold text-sm">R$ {product.price.toFixed(2).replace('.', ',')}</span>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    className="h-7 w-7 rounded-full p-0 bg-neutral-800 hover:bg-primary hover:text-black border border-neutral-700"
+                                                    onClick={() => addToCart(product, 1, false)}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* BIG BUTTON */}
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-900 border-t border-neutral-800 shadow-[0_-4px_10px_rgba(0,0,0,0.2)] z-10 md:relative md:bg-transparent md:border-t-0 md:shadow-none md:p-0">

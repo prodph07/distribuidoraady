@@ -5,19 +5,7 @@ import Image from "next/image";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ProductExchangeDialog } from "./ProductExchangeDialog";
 
 interface ProductCardProps {
     product: Product;
@@ -25,28 +13,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
     const { addToCart } = useCart();
-    const [isOpen, setIsOpen] = useState(false);
-    const [exchangeOption, setExchangeOption] = useState<"exchange" | "buy" | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleAdd = () => {
         if (product.is_returnable) {
-            setIsOpen(true);
+            setIsDialogOpen(true);
         } else {
             addToCart(product, 1, false);
         }
     };
 
-    const confirmAdd = () => {
-        if (!exchangeOption) return;
+    const confirmExchange = (exchangeOption: "exchange" | "buy") => {
         addToCart(product, 1, exchangeOption === "exchange");
-        setIsOpen(false);
-        setExchangeOption(null);
     };
-
-    const totalPrice =
-        exchangeOption === "buy"
-            ? product.price + product.deposit_price
-            : product.price;
 
     return (
         <>
@@ -92,75 +71,12 @@ export function ProductCard({ product }: ProductCardProps) {
                 </div>
             </div>
 
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{product.name}</DialogTitle>
-                        <DialogDescription>
-                            Este produto é retornável. Você possui o vasilhame?
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="py-4">
-                        <RadioGroup
-                            value={exchangeOption || ""}
-                            onValueChange={(v) => setExchangeOption(v as "exchange" | "buy")}
-                            className="gap-4"
-                        >
-                            <div
-                                className={cn(
-                                    "flex items-center justify-between space-x-2 border p-4 rounded-lg cursor-pointer transition-colors hover:bg-accent",
-                                    exchangeOption === "exchange" ? "border-primary bg-primary/5" : "border-input"
-                                )}
-                                onClick={() => setExchangeOption("exchange")}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="exchange" id="exchange" />
-                                    <Label htmlFor="exchange" className="cursor-pointer">
-                                        <span className="font-bold block">Tenho a garrafa vazia</span>
-                                        <span className="text-xs text-muted-foreground">O motoboy recolherá na entrega.</span>
-                                    </Label>
-                                </div>
-                                <span className="font-bold text-primary">R$ {product.price.toFixed(2).replace(".", ",")}</span>
-                            </div>
-
-                            <div
-                                className={cn(
-                                    "flex items-center justify-between space-x-2 border p-4 rounded-lg cursor-pointer transition-colors hover:bg-accent",
-                                    exchangeOption === "buy" ? "border-primary bg-primary/5" : "border-input"
-                                )}
-                                onClick={() => setExchangeOption("buy")}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="buy" id="buy" />
-                                    <Label htmlFor="buy" className="cursor-pointer">
-                                        <span className="font-bold block">Preciso do vasilhame</span>
-                                        <span className="text-xs text-muted-foreground">Você compra a garrafa nova.</span>
-                                    </Label>
-                                </div>
-                                <div className="text-right">
-                                    <span className="font-bold text-primary block">R$ {(product.price + product.deposit_price).toFixed(2).replace(".", ",")}</span>
-                                    <span className="text-[10px] text-muted-foreground">(+ R$ {product.deposit_price.toFixed(2)} casco)</span>
-                                </div>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    <DialogFooter className="sm:justify-between items-center gap-4">
-                        <div className="text-sm text-center sm:text-left">
-                            {exchangeOption === "exchange" && (
-                                <span className="text-yellow-500 font-medium text-xs">⚠️ Motoboy recolherá o casco vazio.</span>
-                            )}
-                            {exchangeOption === "buy" && (
-                                <span className="text-green-500 font-medium text-xs">✅ Garrafa nova será sua.</span>
-                            )}
-                        </div>
-                        <Button onClick={confirmAdd} disabled={!exchangeOption} className="w-full sm:w-auto">
-                            Confirmar - R$ {exchangeOption ? totalPrice.toFixed(2).replace(".", ",") : "..."}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ProductExchangeDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                product={product}
+                onConfirm={confirmExchange}
+            />
         </>
     );
 }
