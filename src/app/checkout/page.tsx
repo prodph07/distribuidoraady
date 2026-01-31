@@ -30,7 +30,7 @@ export default function CheckoutPage() {
         number: "",
         complement: "",
     });
-    const [paymentMethod, setPaymentMethod] = useState("money"); // money, machine, or online
+    const [paymentMethod, setPaymentMethod] = useState("online"); // Default to online (Pix)
     const [commitment, setCommitment] = useState(false);
 
     // Fee State
@@ -445,34 +445,6 @@ export default function CheckoutPage() {
                                         <Zap className={cn("w-6 h-6", paymentMethod === 'online' ? "text-primary" : "text-neutral-500")} />
                                     </div>
                                     <span className="font-bold text-sm">Pagar Online (Pix)</span>
-                                </Label>
-
-                                <Label
-                                    htmlFor="machine"
-                                    className={cn(
-                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center hover:border-neutral-700",
-                                        paymentMethod === 'machine'
-                                            ? "border-primary bg-primary/10 text-white"
-                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
-                                    )}
-                                >
-                                    <RadioGroupItem value="machine" id="machine" className="sr-only" />
-                                    <CreditCard className={cn("w-6 h-6", paymentMethod === 'machine' ? "text-primary" : "text-neutral-500")} />
-                                    <span className="font-bold text-sm">Maquininha</span>
-                                </Label>
-
-                                <Label
-                                    htmlFor="money"
-                                    className={cn(
-                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center hover:border-neutral-700",
-                                        paymentMethod === 'money'
-                                            ? "border-primary bg-primary/10 text-white"
-                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
-                                    )}
-                                >
-                                    <RadioGroupItem value="money" id="money" className="sr-only" />
-                                    <Banknote className={cn("w-6 h-6", paymentMethod === 'money' ? "text-green-500" : "text-neutral-500")} />
-                                    <span className="font-bold text-sm">Dinheiro</span>
                                 </Label>
                             </RadioGroup>
 

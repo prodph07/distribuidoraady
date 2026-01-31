@@ -212,16 +212,30 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
                     </div>
 
 
-                    <a
-                        href={`https://wa.me/55${order.address ? '00000000000' : ''}`} // Placeholder, ideally use admin/store phone
-                        target="_blank"
-                        className="w-full block"
-                    >
-                        {/* We don't have store phone in env variable yet, so maybe just a button "Ajuda" that goes to a generic contact or disabled for now if strict */}
-                        <Button className="w-full h-12 rounded-full font-bold text-base text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors bg-neutral-900 border border-neutral-800 shadow-sm">
-                            Precisa de ajuda?
-                        </Button>
-                    </a>
+                    <div className="space-y-3">
+                        <a
+                            href={`https://wa.me/559884570073?text=${encodeURIComponent(`Olá! Realizei o pagamento do pedido #${order.id}. Segue o comprovante.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full block"
+                        >
+                            <Button className="w-full h-14 rounded-2xl font-black text-lg bg-[#25D366] text-black hover:bg-[#128C7E] hover:text-white shadow-lg shadow-green-900/20 transition-all flex items-center justify-center gap-2">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" />
+                                ENVIAR COMPROVANTE
+                            </Button>
+                        </a>
+
+                        <a
+                            href={`https://wa.me/559884570073`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full block"
+                        >
+                            <Button className="w-full h-12 rounded-xl font-bold text-base text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors bg-neutral-900 border border-neutral-800 shadow-sm">
+                                Precisa de ajuda?
+                            </Button>
+                        </a>
+                    </div>
                 </div>
             </main>
         </div>
