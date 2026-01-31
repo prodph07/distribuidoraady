@@ -1,5 +1,5 @@
 "use client";
-// export const runtime = 'edge'; // Disabled to ensure Realtime compatibility
+export const runtime = 'edge'; // Disabled to ensure Realtime compatibility
 
 import { useEffect, useState, use } from "react";
 import { Header } from "@/components/Header";
