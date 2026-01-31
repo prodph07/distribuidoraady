@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Product, Category, Subcategory } from "@/types";
+import { compressImage } from "@/lib/imageUtils";
+import { supabase } from "@/lib/supabase";
+import { Upload, X, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface ProductFormDialogProps {
     isOpen: boolean;
@@ -13,7 +17,7 @@ interface ProductFormDialogProps {
     editingProduct: Product | null;
     categories: Category[];
     subcategories: Subcategory[];
-    onSave: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+    onSave: (formData: FormData) => Promise<void>;
 }
 
 export function ProductFormDialog({
@@ -25,19 +29,86 @@ export function ProductFormDialog({
     onSave
 }: ProductFormDialogProps) {
     const [isReturnable, setIsReturnable] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
-    // Sync isReturnable when editingProduct changes
+    // Sync isReturnable and preview when editingProduct changes
     useEffect(() => {
         if (editingProduct) {
             setIsReturnable(!!editingProduct.is_returnable);
+            setPreviewUrl(editingProduct.image_url);
         } else {
             setIsReturnable(false);
+            setPreviewUrl(null);
         }
+        setImageFile(null); // Reset new file
     }, [editingProduct, isOpen]);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        await onSave(e);
-        // We rely on parent to close modal or reset, but usually good to have local handling if needed
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const objectUrl = URL.createObjectURL(file);
+            setPreviewUrl(objectUrl);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setPreviewUrl(null);
+    };
+
+
+
+    // REWRITE handle submit more cleanly:
+    const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setUploading(true);
+
+        const form = e.currentTarget;
+
+        try {
+            let finalImageUrl = editingProduct?.image_url || "";
+
+            if (imageFile) {
+                const compressedBlob = await compressImage(imageFile);
+                const compressedFile = new File([compressedBlob], "image.jpg", { type: "image/jpeg" });
+                const fileName = `product-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+
+                const { error } = await supabase.storage
+                    .from("products")
+                    .upload(fileName, compressedFile);
+
+                if (error) throw error;
+
+                const { data } = supabase.storage.from("products").getPublicUrl(fileName);
+                finalImageUrl = data.publicUrl;
+            } else if (!previewUrl) {
+                finalImageUrl = "";
+            }
+
+            // Update the hidden input value so the parent's `new FormData(e.currentTarget)` picks it up
+            const imageInput = form.querySelector('input[name="image_url"]') as HTMLInputElement;
+            if (imageInput) {
+                imageInput.value = finalImageUrl;
+            }
+
+            const formData = new FormData(form);
+            // Ensure image_url is set in FormData even if DOM update lagged (manual override)
+            formData.set("image_url", finalImageUrl);
+            // Ensure is_returnable is set correctly
+            formData.set("is_returnable", isReturnable ? "on" : "off");
+
+            await onSave(formData);
+
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            const msg = error.message || "Erro desconhecido";
+            alert(`Erro ao salvar imagem: ${msg}. Verifique as permissões do Bucket 'products'.`);
+        } finally {
+            setUploading(false);
+        }
     };
 
     return (
@@ -49,7 +120,7 @@ export function ProductFormDialog({
                         {editingProduct ? "Atualize os dados do produto." : "Preencha os dados da cerveja para adicionar ao catálogo."}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <form onSubmit={handleFormSubmit} className="space-y-4 mt-4">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Nome do Produto</Label>
                         <Input
@@ -176,18 +247,58 @@ export function ProductFormDialog({
                         </div>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="image_url">URL da Imagem</Label>
-                        <Input
-                            id="image_url"
-                            name="image_url"
-                            defaultValue={editingProduct?.image_url}
-                            placeholder="https://..."
-                            className="bg-neutral-800 border-neutral-700 text-white"
-                        />
+                        <Label>Imagem do Produto</Label>
+
+                        {/* Hidden Input for Form Submission */}
+                        <input type="hidden" name="image_url" defaultValue={editingProduct?.image_url || ""} />
+
+                        <div className="flex flex-col gap-4">
+                            {previewUrl ? (
+                                <div className="relative w-full aspect-video bg-neutral-800 rounded-lg overflow-hidden border border-neutral-700 group">
+                                    <Image
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        fill
+                                        className="object-contain"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveImage}
+                                        className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-neutral-700 rounded-lg cursor-pointer hover:bg-neutral-800/50 hover:border-primary/50 transition-colors">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <Upload className="w-8 h-8 text-neutral-400 mb-2" />
+                                        <p className="text-sm text-neutral-400">Clique para selecionar uma imagem</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageChange}
+                                    />
+                                </label>
+                            )}
+                        </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold">
-                        {editingProduct ? "Atualizar Produto" : "Salvar Produto"}
+                    <Button
+                        type="submit"
+                        disabled={uploading}
+                        className="w-full bg-primary text-black hover:bg-yellow-400 font-bold"
+                    >
+                        {uploading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Salvando...
+                            </>
+                        ) : (
+                            editingProduct ? "Atualizar Produto" : "Salvar Produto"
+                        )}
                     </Button>
                 </form>
             </DialogContent>

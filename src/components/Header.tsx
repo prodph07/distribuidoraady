@@ -40,17 +40,7 @@ export function Header() {
                     </div>
                 </div>
 
-                {/* Cart Area */}
                 <div className="flex items-center gap-3">
-                    {mounted && cartTotal > 0 && (
-                        <div className="hidden sm:flex flex-col items-end leading-tight text-black">
-                            <span className="text-[10px] font-bold uppercase opacity-70">Total</span>
-                            <span className="font-black text-sm">
-                                R$ {cartTotal.toFixed(2).replace(".", ",")}
-                            </span>
-                        </div>
-                    )}
-
                     <Link href="/checkout">
                         <Button
                             variant="default"
@@ -59,7 +49,14 @@ export function Header() {
                                 }`}
                         >
                             <ShoppingCart className="h-5 w-5 mr-2" />
-                            <span className="font-bold hidden sm:inline">Carrinho</span>
+                            {mounted && cartTotal > 0 ? (
+                                <span className="font-bold">
+                                    R$ {cartTotal.toFixed(2).replace(".", ",")}
+                                </span>
+                            ) : (
+                                <span className="font-bold hidden sm:inline">Carrinho</span>
+                            )}
+
                             {mounted && cartCount > 0 && (
                                 <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white shadow-sm animate-in zoom-in border-2 border-white">
                                     {cartCount}

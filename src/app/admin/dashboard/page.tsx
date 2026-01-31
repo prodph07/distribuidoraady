@@ -26,6 +26,8 @@ import {
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { ProductFormDialog } from "@/components/admin/ProductFormDialog";
 import { HomeConfigTab } from "@/components/admin/HomeConfigTab";
+import { StockManager } from "@/components/admin/StockManager";
+import { CategoryManagerDialog } from "@/components/admin/CategoryManagerDialog";
 import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
@@ -37,8 +39,8 @@ export default function AdminDashboard() {
     const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
     const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-    const [stockSearch, setStockSearch] = useState("");
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isReturnable, setIsReturnable] = useState(false);
 
     const [loading, setLoading] = useState(true);
@@ -246,9 +248,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleSaveProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+    const handleSaveProduct = async (formData: FormData) => {
         const name = formData.get('name') as string;
         const price = parseFloat(formData.get('price') as string);
         const stock_quantity = parseInt(formData.get('stock_quantity') as string) || 0;
@@ -258,7 +258,15 @@ export default function AdminDashboard() {
         const deposit_price = parseFloat(formData.get('deposit_price') as string) || 0;
         const bottle_cost = parseFloat(formData.get('bottle_cost') as string) || 0;
         const is_returnable = formData.get('is_returnable') === 'on';
-        const image_url = formData.get('image_url') as string || 'https://images.unsplash.com/photo-1606168094136-e8c8c6383307?q=80&w=2670&auto=format&fit=crop';
+
+        // Handle image Logic:
+        // Use placeholder only if it's a NEW product and no image provided.
+        // For updates, respect empty string (which means removal).
+        let image_url = formData.get('image_url') as string;
+        if (!editingProduct && !image_url) {
+            image_url = 'https://images.unsplash.com/photo-1606168094136-e8c8c6383307?q=80&w=2670&auto=format&fit=crop';
+        }
+
 
         const productData = {
             name,
@@ -321,37 +329,9 @@ export default function AdminDashboard() {
         }
     }
 
-    // Filter Logic
     const pendingOrders = orders.filter(o => ['pending_payment', 'preparing'].includes(o.status));
     const deliveryOrders = orders.filter(o => o.status === 'out_for_delivery');
     const completedOrders = orders.filter(o => o.status === 'delivered');
-
-    const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const name = formData.get('cat_name') as string;
-        if (!name) return;
-        await supabase.from('categories').insert({ name });
-        fetchCategories();
-        (e.target as HTMLFormElement).reset();
-    };
-
-    const handleAddSubcategory = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const name = formData.get('sub_name') as string;
-        const category_id = formData.get('cat_id') as string;
-        if (!name || !category_id) return;
-        await supabase.from('subcategories').insert({ name, category_id: parseInt(category_id) });
-        fetchCategories();
-        (e.target as HTMLFormElement).reset();
-    };
-
-    const handleDeleteCategory = async (id: number) => {
-        if (!confirm("Excluir categoria? Isso pode afetar subcategorias.")) return;
-        await supabase.from('categories').delete().eq('id', id);
-        fetchCategories();
-    };
 
     return (
         <div className="min-h-screen bg-neutral-950 text-neutral-200 pb-20">
@@ -564,267 +544,41 @@ export default function AdminDashboard() {
 
                 {mainSection === 'stock' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
-                            <div className="mb-6 space-y-4">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                    <h2 className="text-xl font-bold flex items-center gap-2">
-                                        <Database className="w-6 h-6 text-primary" /> Gerenciamento de Estoque
-                                    </h2>
-
-                                    {/* Manage Categories Modal Trigger */}
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm" className="border-neutral-700 hover:bg-neutral-800">
-                                                <Settings className="w-4 h-4 mr-2" /> Gerenciar Categorias
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="bg-neutral-900 border-neutral-800 text-neutral-100 max-w-2xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Gerenciar Categorias e Subcategorias</DialogTitle>
-                                            </DialogHeader>
-                                            <div className="grid md:grid-cols-2 gap-8 mt-4">
-                                                {/* Categories Column */}
-                                                <div>
-                                                    <h3 className="font-bold mb-3 text-primary">Categorias</h3>
-                                                    <form onSubmit={handleAddCategory} className="flex gap-2 mb-4">
-                                                        <Input name="cat_name" placeholder="Nova Categoria" className="bg-neutral-800 border-neutral-700 h-8" required />
-                                                        <Button type="submit" size="sm" className="bg-primary text-black hover:bg-yellow-500">+</Button>
-                                                    </form>
-                                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                                                        {categories.map(c => (
-                                                            <div key={c.id} className="flex justify-between items-center bg-neutral-950 p-2 rounded border border-neutral-800">
-                                                                <span>{c.name}</span>
-                                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:bg-neutral-900" onClick={() => handleDeleteCategory(c.id)}><Trash2 size={12} /></Button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Subcategories Column */}
-                                                <div>
-                                                    <h3 className="font-bold mb-3 text-neutral-300">Subcategorias</h3>
-                                                    <form onSubmit={handleAddSubcategory} className="space-y-2 mb-4">
-                                                        <select name="cat_id" className="w-full bg-neutral-800 border border-neutral-700 rounded p-1 text-sm text-white" required>
-                                                            <option value="">Selecione a Categoria Pai...</option>
-                                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                        </select>
-                                                        <div className="flex gap-2">
-                                                            <Input name="sub_name" placeholder="Nova Subcategoria" className="bg-neutral-800 border-neutral-700 h-8" required />
-                                                            <Button type="submit" size="sm" className="bg-neutral-700 hover:bg-neutral-600">+</Button>
-                                                        </div>
-                                                    </form>
-                                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                                                        {subcategories.map(sc => {
-                                                            const parent = categories.find(c => c.name === selectedCategory);
-                                                            return (
-                                                                <div key={sc.id} className="flex justify-between items-center bg-neutral-950 p-2 rounded border border-neutral-800">
-                                                                    <div className="flex flex-col">
-                                                                        <span>{sc.name}</span>
-                                                                        <span className="text-[10px] text-neutral-500">{parent?.name}</span>
-                                                                    </div>
-                                                                    {/* Add delete logic for subcategory later if needed */}
-                                                                </div>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </div>
-
-                                {/* Search Bar */}
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
-                                    <Input
-                                        placeholder="Buscar produtos no estoque..."
-                                        className="pl-9 bg-neutral-900 border-neutral-700"
-                                        value={stockSearch}
-                                        onChange={(e) => setStockSearch(e.target.value)}
-                                    />
-                                </div>
-
-                                {/* Category Filters (Wrapped) */}
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        variant={selectedCategory === 'Todas' ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => {
-                                            setSelectedCategory('Todas');
-                                            setSelectedSubcategory(null);
-                                        }}
-                                        className={selectedCategory === 'Todas' ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
-                                    >
-                                        Todas
-                                    </Button>
-                                    {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(cat => (
-                                        <Button
-                                            key={cat}
-                                            variant={selectedCategory === cat ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedCategory(cat as string);
-                                                setSelectedSubcategory(null);
-                                            }}
-                                            className={selectedCategory === cat ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
-                                        >
-                                            {cat}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Subfilters */}
-                            {selectedCategory !== 'Todas' && (
-                                <div className="flex flex-wrap gap-2 mb-6">
-                                    <div className="text-sm text-neutral-500 flex items-center mr-2">Filtros:</div>
-                                    <button
-                                        onClick={() => setSelectedSubcategory(null)}
-                                        className={`px-3 py-1 border rounded-full text-xs transition-colors ${selectedSubcategory === null ? "bg-white text-black border-white font-bold" : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-600"}`}
-                                    >
-                                        Todos
-                                    </button>
-                                    {subcategories
-                                        .filter(sc => {
-                                            const parent = categories.find(c => c.name === selectedCategory);
-                                            return parent && sc.category_id === parent.id;
-                                        })
-                                        .map(sc => (
-                                            <button
-                                                key={sc.id}
-                                                onClick={() => setSelectedSubcategory(selectedSubcategory === sc.name ? null : sc.name)}
-                                                className={`px-3 py-1 border rounded-full text-xs transition-colors ${selectedSubcategory === sc.name ? "bg-white text-black border-white font-bold" : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-600"}`}
-                                            >
-                                                {sc.name}
-                                            </button>
-                                        ))
-                                    }
-                                </div>
-                            )}
-
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {products.filter(p => {
-                                    if (stockSearch && !p.name.toLowerCase().includes(stockSearch.toLowerCase())) return false;
-                                    if (selectedCategory !== 'Todas' && p.category !== selectedCategory) return false;
-                                    if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
-                                    return true;
-                                }).map(product => (
-                                    <div key={product.id} className="flex flex-col p-4 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-600 transition-colors group">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <span className={`font-medium block ${product.in_stock ? "text-neutral-200" : "text-neutral-500 line-through"}`}>
-                                                    {product.name}
-                                                </span>
-                                                {product.category && (
-                                                    <span className="text-[10px] uppercase font-bold text-neutral-500 bg-neutral-950 px-1.5 py-0.5 rounded">
-                                                        {product.category} {product.subcategory && `• ${product.subcategory}`}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Switch
-                                                    id={`stock-${product.id}`}
-                                                    checked={product.in_stock}
-                                                    onCheckedChange={() => toggleStock(product.id, product.in_stock)}
-                                                    className="data-[state=unchecked]:bg-neutral-700"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between mb-4 bg-neutral-950/50 p-2 rounded-lg">
-                                            <span className="text-xs text-neutral-400 font-bold uppercase">Estoque</span>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => updateStockQuantity(product.id, -1)}
-                                                    className="w-6 h-6 flex items-center justify-center rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-                                                >
-                                                    <Minus size={14} />
-                                                </button>
-                                                <span className="font-mono font-bold text-lg min-w-[20px] text-center">{product.stock_quantity || 0}</span>
-                                                <button
-                                                    onClick={() => updateStockQuantity(product.id, 1)}
-                                                    className="w-6 h-6 flex items-center justify-center rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-                                                >
-                                                    <Plus size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-auto pt-2 border-t border-neutral-800 text-xs text-neutral-500 flex justify-between items-center">
-                                            <div>
-                                                <span className="font-semibold text-neutral-300 block">R$ {product.price.toFixed(2)}</span>
-                                                {(product.cost_price || 0) > 0 && !product.is_returnable && (
-                                                    <span className={`text-[10px] font-bold block ${(product.price - (product.cost_price || 0)) > 0 ? "text-green-500" : "text-red-500"}`}>
-                                                        Lucro: R$ {(product.price - (product.cost_price || 0)).toFixed(2)}
-                                                    </span>
-                                                )}
-
-                                                {product.is_returnable && (
-                                                    <div className="flex flex-col mt-1 space-y-0.5">
-                                                        {/* Refill Profit */}
-                                                        <span className={`text-[10px] font-bold block bg-neutral-800 px-1 rounded ${(product.price - (product.cost_price || 0)) > 0 ? "text-green-400" : "text-red-400"}`}>
-                                                            Líq: R$ {(product.price - (product.cost_price || 0)).toFixed(2)}
-                                                        </span>
-                                                        {/* Full Profit (Liquid + Bottle - Costs) */}
-                                                        {(product.bottle_cost || 0) > 0 && (
-                                                            <span className={`text-[10px] font-bold block bg-neutral-800 px-1 rounded ${((product.price + (product.deposit_price || 0)) - ((product.cost_price || 0) + (product.bottle_cost || 0))) > 0 ? "text-green-400" : "text-red-400"}`}>
-                                                                Cheio: R$ {((product.price + (product.deposit_price || 0)) - ((product.cost_price || 0) + (product.bottle_cost || 0))).toFixed(2)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6 text-neutral-400 hover:text-white hover:bg-neutral-800"
-                                                    onClick={() => openEditModal(product)}
-                                                >
-                                                    <Pencil size={14} />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6 text-red-500 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    onClick={() => deleteProduct(product.id)}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Add Product Card (Button trigger for Modal) */}
-                                <button
-                                    onClick={openAddModal}
-                                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-neutral-800 hover:border-primary/50 hover:bg-primary/5 transition-all group h-full min-h-[160px]"
-                                >
-                                    <div className="h-10 w-10 rounded-full bg-neutral-800 group-hover:bg-primary text-neutral-500 group-hover:text-black flex items-center justify-center mb-2 transition-colors">
-                                        <Plus size={24} />
-                                    </div>
-                                    <span className="font-bold text-neutral-500 group-hover:text-primary">Adicionar Produto</span>
-                                </button>
-
-                                <ProductFormDialog
-                                    isOpen={isProductModalOpen}
-                                    onOpenChange={setIsProductModalOpen}
-                                    editingProduct={editingProduct}
-                                    categories={categories}
-                                    subcategories={subcategories}
-                                    onSave={handleSaveProduct}
-                                />
-                            </div>
-                        </div>
+                        <StockManager
+                            products={products}
+                            categories={categories}
+                            subcategories={subcategories}
+                            onAddProduct={openAddModal}
+                            onEditProduct={openEditModal}
+                            onManageCategories={() => setIsCategoryModalOpen(true)}
+                            onToggleStock={toggleStock}
+                            onUpdateStockQuantity={updateStockQuantity}
+                            onDeleteProduct={deleteProduct}
+                        />
+                        <CategoryManagerDialog
+                            isOpen={isCategoryModalOpen}
+                            onOpenChange={setIsCategoryModalOpen}
+                            categories={categories}
+                            subcategories={subcategories}
+                            onRefresh={fetchCategories}
+                        />
+                        <ProductFormDialog
+                            isOpen={isProductModalOpen}
+                            onOpenChange={setIsProductModalOpen}
+                            editingProduct={editingProduct}
+                            categories={categories}
+                            subcategories={subcategories}
+                            onSave={handleSaveProduct}
+                        />
                     </div>
                 )}
 
                 {/* MAIN SECTION: HOME CONFIG */}
-                {mainSection === 'home-config' && (
-                    <HomeConfigTab products={products} />
-                )}
+                {
+                    mainSection === 'home-config' && (
+                        <HomeConfigTab products={products} />
+                    )
+                }
 
                 {/* MAIN SECTION: COURIERS */}
                 {

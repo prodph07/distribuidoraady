@@ -6,6 +6,7 @@ import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { ProductExchangeDialog } from "./ProductExchangeDialog";
+import { ProductDrawer } from "./ProductDrawer";
 import { ImageIcon } from "lucide-react";
 
 interface ProductCardProps {
@@ -14,24 +15,39 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
     const { addToCart } = useCart();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isExchangeDialogOpen, setIsExchangeDialogOpen] = useState(false);
+    const [pendingQuantity, setPendingQuantity] = useState(1);
 
-    const handleAdd = () => {
+    const handleAddClick = () => {
+        setIsDrawerOpen(true);
+    };
+
+    const handleDrawerAddToCart = (quantity: number) => {
+        setPendingQuantity(quantity);
+        setIsDrawerOpen(false);
+
         if (product.is_returnable) {
-            setIsDialogOpen(true);
+            // Slight delay to allow drawer to close smooth
+            setTimeout(() => {
+                setIsExchangeDialogOpen(true);
+            }, 300);
         } else {
-            addToCart(product, 1, false);
+            addToCart(product, quantity, false);
         }
     };
 
     const confirmExchange = (exchangeOption: "exchange" | "buy") => {
-        addToCart(product, 1, exchangeOption === "exchange");
+        addToCart(product, pendingQuantity, exchangeOption === "exchange");
     };
 
     return (
         <>
             <div className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border flex flex-col h-full group transition-all hover:shadow-md hover:-translate-y-1">
-                <div className="relative aspect-square bg-white p-4 overflow-hidden flex items-center justify-center">
+                <div
+                    className="relative aspect-square bg-white p-4 overflow-hidden flex items-center justify-center cursor-pointer"
+                    onClick={handleAddClick}
+                >
                     {product.image_url ? (
                         <Image
                             src={product.image_url}
@@ -69,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
                             </span>
                         </div>
                         <Button
-                            onClick={handleAdd}
+                            onClick={handleAddClick}
                             className="rounded-full w-24 h-10 font-bold shadow-sm hover:scale-105 transition-transform"
                             variant="default"
                         >
@@ -79,9 +95,16 @@ export function ProductCard({ product }: ProductCardProps) {
                 </div>
             </div>
 
+            <ProductDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                product={product}
+                onAddToCart={handleDrawerAddToCart}
+            />
+
             <ProductExchangeDialog
-                open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                open={isExchangeDialogOpen}
+                onOpenChange={setIsExchangeDialogOpen}
                 product={product}
                 onConfirm={confirmExchange}
             />
