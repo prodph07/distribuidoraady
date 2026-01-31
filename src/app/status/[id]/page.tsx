@@ -22,6 +22,8 @@ interface Order {
     status: string;
     address: string;
     total_amount: number;
+    delivery_fee?: number;
+    service_fee?: number;
 }
 
 export default function OrderStatusPage({ params }: { params: Promise<{ id: string }> }) {
