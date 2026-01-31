@@ -1,5 +1,5 @@
 "use client";
-export const runtime = 'edge';
+// export const runtime = 'edge'; // Disabled to ensure Realtime compatibility
 
 import { useEffect, useState, use } from "react";
 import { Header } from "@/components/Header";
@@ -7,6 +7,7 @@ import { CheckCircle2, Clock, Package, Bike, MapPin, AlertCircle } from "lucide-
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+
 
 const STEPS = [
     { id: 'pending_payment', label: 'Aguardando Pagamento', icon: Clock },
@@ -27,6 +28,9 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
     const { id } = use(params); // Unwrap params
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Fetch Store Settings (Stripe)
+
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -113,6 +117,8 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
                         </p>
                     </div>
 
+                    {/* Payment Action */}
+
                     <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 shadow-sm">
                         <div className="relative">
                             {/* Line connecting steps */}
@@ -176,6 +182,32 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     )}
+
+                    {/* Order Financial Summary */}
+                    <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800 space-y-3">
+                        <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                            <span className="w-1 h-5 bg-primary rounded-full"></span>
+                            Resumo do Pedido
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between text-neutral-400">
+                                <span>Subtotal</span>
+                                <span>R$ {(order.total_amount - (order.delivery_fee || 0) - (order.service_fee || 0)).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                            <div className="flex justify-between text-neutral-400">
+                                <span>Taxa de Entrega</span>
+                                <span>R$ {(order.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                            <div className="flex justify-between text-neutral-400">
+                                <span>Taxa de Serviço</span>
+                                <span>R$ {(order.service_fee || 0).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                            <div className="pt-3 border-t border-neutral-800 flex justify-between items-center">
+                                <span className="font-bold text-white">Total</span>
+                                <span className="text-xl font-black text-primary">R$ {order.total_amount.toFixed(2).replace('.', ',')}</span>
+                            </div>
+                        </div>
+                    </div>
 
 
                     <a

@@ -86,3 +86,8 @@ export interface HomeSection {
     config: Record<string, any>; // { title, subtitle, image_url, etc. }
     order_index: number;
 }
+export interface StoreSettings {
+    id: number;
+    stripe_account_id?: string;
+    stripe_details?: any;
+}

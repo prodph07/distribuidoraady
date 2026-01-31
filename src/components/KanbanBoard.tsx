@@ -15,12 +15,12 @@ export function KanbanBoard({ orders, onUpdateStatus }: KanbanBoardProps) {
     ];
 
     return (
-        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-[calc(100vh-140px)] pb-2">
             {columns.map((col) => {
                 const columnOrders = orders.filter(o => col.statusFilter.includes(o.status));
 
                 return (
-                    <div key={col.id} className="min-w-[300px] md:min-w-[350px] lg:min-w-[400px] flex-1 flex flex-col bg-neutral-800/50 rounded-xl border border-neutral-700/50 shrink-0">
+                    <div key={col.id} className="flex flex-col bg-neutral-800/50 rounded-xl border border-neutral-700/50 min-w-0 h-full overflow-hidden">
                         {/* Column Header */}
                         <div className={`p-4 border-b border-neutral-700 flex justify-between items-center rounded-t-xl ${col.color}`}>
                             <h3 className="font-bold uppercase tracking-wider text-sm">{col.title}</h3>

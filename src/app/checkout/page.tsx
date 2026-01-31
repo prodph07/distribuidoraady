@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, Zap, ShoppingBag, ArrowLeft, Plus } from "lucide-react";
+import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, ShoppingBag, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { PixPaymentModal } from "@/components/PixPaymentModal";
+import { Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
@@ -28,13 +30,41 @@ export default function CheckoutPage() {
         number: "",
         complement: "",
     });
-    const [paymentMethod, setPaymentMethod] = useState("money"); // money or machine
+    const [paymentMethod, setPaymentMethod] = useState("money"); // money, machine, or online
     const [commitment, setCommitment] = useState(false);
+
+    // Fee State
+    const [deliveryFee, setDeliveryFee] = useState(0);
+    const [serviceFee, setServiceFee] = useState(0);
+    const [servicePercent, setServicePercent] = useState(0); // Only for display if tiers
+
+    // Config State
+    const [tiers, setTiers] = useState<any[]>([]);
+    const [commissionType, setCommissionType] = useState<"tiers" | "fixed">("tiers");
+    const [fixedCommission, setFixedCommission] = useState(0);
+
+    // Pix Simulator State
+    const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+    const [createdOrder, setCreatedOrder] = useState<any>(null);
 
     const hasExchangeItems = items.some((i) => i.is_returnable && i.has_exchange);
 
     // Load saved data from localStorage on mount
+    // Load saved data from localStorage on mount
     useEffect(() => {
+        // Load settings for fees
+        const fetchSettings = async () => {
+            const { data } = await supabase.from('settings').select('*').single();
+            if (data) {
+                setDeliveryFee(Number(data.delivery_fee));
+                setTiers(data.commission_tiers || []);
+                setCommissionType(data.commission_type || "tiers");
+                setFixedCommission(Number(data.commission_fixed_value || 0));
+            }
+        };
+        fetchSettings();
+
+        // Load saved user data
         const savedData = localStorage.getItem("customer_data");
         if (savedData) {
             try {
@@ -44,6 +74,34 @@ export default function CheckoutPage() {
             }
         }
     }, []);
+
+    // Calculate Dynamic Service Fee
+    useEffect(() => {
+        if (commissionType === 'fixed') {
+            setServiceFee(fixedCommission);
+            setServicePercent(0); // Not applicable
+            return;
+        }
+
+        if (!tiers.length) return;
+
+        let percent = 5; // fallback
+        // Tiers ex: [{max: 50, percent: 10}, {max: 150, percent: 7}]
+        // We look for the first tier where cartTotal <= max
+        const foundTier = tiers.find(t => cartTotal <= t.max);
+        if (foundTier) {
+            percent = foundTier.percent;
+        } else {
+            // If greater than all tiers
+            percent = tiers[tiers.length - 1]?.percent || 5;
+        }
+
+        setServicePercent(percent);
+        setServiceFee(cartTotal * (percent / 100));
+
+    }, [cartTotal, tiers, commissionType, fixedCommission]);
+
+    const finalTotal = cartTotal + deliveryFee + serviceFee;
 
     const handleRemove = (id: number, hasExchange: boolean) => {
         removeFromCart(id, hasExchange);
@@ -62,7 +120,9 @@ export default function CheckoutPage() {
                     customer_name: formData.name,
                     customer_phone: formData.phone,
                     address: `${formData.address}, ${formData.number} ${formData.complement ? '- ' + formData.complement : ''}`,
-                    total_amount: cartTotal,
+                    total_amount: finalTotal,
+                    delivery_fee: deliveryFee,
+                    service_fee: serviceFee,
                     payment_id: 'offline', // Placeholder for offline payment
                 })
                 .select()
@@ -89,9 +149,18 @@ export default function CheckoutPage() {
             localStorage.setItem("last_order_id", order.id);
             localStorage.setItem("customer_data", JSON.stringify(formData)); // Remember user for next time
 
-            // 4. Success!
-            clearCart();
-            router.push(`/status/${order.id}`);
+            // 4. Handle Payment Flow
+            if (paymentMethod === 'online') {
+                // Open Pix Mock Modal
+                setCreatedOrder(order);
+                setIsPixModalOpen(true);
+                // clearCart(); // FIX: Don't clear cart yet, otherwise we hit 'Empty Cart' state and Modal acts weird
+                // We DO NOT redirect yet. We wait for the modal to detect payment.
+            } else {
+                // Offline Payment (Money/Machine)
+                clearCart();
+                router.push(`/status/${order.id}`);
+            }
 
         } catch (error: any) {
             console.error("Error creating order (FULL DETAILS):", JSON.stringify(error, null, 2));
@@ -358,38 +427,72 @@ export default function CheckoutPage() {
                             </h2>
 
                             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-3 mb-6">
-                                <div
+
+                                <Label
+                                    htmlFor="online"
                                     className={cn(
-                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center",
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center col-span-2 hover:border-neutral-700",
+                                        paymentMethod === 'online'
+                                            ? "border-primary bg-primary/10 text-white"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
+                                    )}
+                                >
+                                    <RadioGroupItem value="online" id="online" className="sr-only" />
+                                    <div className="flex gap-2">
+                                        <div className="bg-[#32BCAD] p-1 rounded text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L5 5" /><path d="M19 5l-4.172 4.172A2 2 0 0 1 13.414 10H5v12" /></svg>
+                                        </div>
+                                        <Zap className={cn("w-6 h-6", paymentMethod === 'online' ? "text-primary" : "text-neutral-500")} />
+                                    </div>
+                                    <span className="font-bold text-sm">Pagar Online (Pix)</span>
+                                </Label>
+
+                                <Label
+                                    htmlFor="machine"
+                                    className={cn(
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center hover:border-neutral-700",
                                         paymentMethod === 'machine'
                                             ? "border-primary bg-primary/10 text-white"
-                                            : "border-neutral-800 bg-neutral-800 text-neutral-400 hover:border-neutral-700"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
                                     )}
-                                    onClick={() => setPaymentMethod("machine")}
                                 >
                                     <RadioGroupItem value="machine" id="machine" className="sr-only" />
                                     <CreditCard className={cn("w-6 h-6", paymentMethod === 'machine' ? "text-primary" : "text-neutral-500")} />
                                     <span className="font-bold text-sm">Maquininha</span>
-                                </div>
+                                </Label>
 
-                                <div
+                                <Label
+                                    htmlFor="money"
                                     className={cn(
-                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center",
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center hover:border-neutral-700",
                                         paymentMethod === 'money'
                                             ? "border-primary bg-primary/10 text-white"
-                                            : "border-neutral-800 bg-neutral-800 text-neutral-400 hover:border-neutral-700"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
                                     )}
-                                    onClick={() => setPaymentMethod("money")}
                                 >
                                     <RadioGroupItem value="money" id="money" className="sr-only" />
                                     <Banknote className={cn("w-6 h-6", paymentMethod === 'money' ? "text-green-500" : "text-neutral-500")} />
                                     <span className="font-bold text-sm">Dinheiro</span>
-                                </div>
+                                </Label>
                             </RadioGroup>
 
-                            <div className="flex justify-between items-center pt-4 border-t border-neutral-800">
-                                <span className="text-neutral-400 font-medium">Total a pagar</span>
-                                <span className="text-2xl font-black text-primary">R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
+                            <div className="flex flex-col gap-2 pt-4 border-t border-neutral-800">
+                                <div className="flex justify-between items-center text-sm text-neutral-500">
+                                    <span>Subtotal</span>
+                                    <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm text-neutral-500">
+                                    <span>Taxa de Entrega</span>
+                                    <span>R$ {deliveryFee.toFixed(2).replace(".", ",")}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm text-neutral-500">
+                                    <span>Taxa de Serviço {commissionType === 'tiers' ? `(${servicePercent}%)` : '(Fixo)'}</span>
+                                    <span>R$ {serviceFee.toFixed(2).replace(".", ",")}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xl pt-2 border-t border-neutral-800/50">
+                                    <span className="text-white font-bold">Total a pagar</span>
+                                    <span className="text-2xl font-black text-primary">R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -434,10 +537,16 @@ export default function CheckoutPage() {
                             {loading ? (
                                 "ENVIANDO..."
                             ) : (
-                                <>
-                                    <span>FAZER PEDIDO</span>
-                                    <Zap className="w-5 h-5 fill-black" />
-                                </>
+                                paymentMethod === 'online' ? (
+                                    <>
+                                        <span>PAGAR COM PIX</span>
+                                        <div className="w-5 h-5 bg-[#32BCAD] rounded-full flex items-center justify-center text-white text-[10px] font-black">P</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>FAZER PEDIDO</span>
+                                    </>
+                                )
                             )}
                         </Button>
                     </div>
@@ -445,6 +554,20 @@ export default function CheckoutPage() {
                     <div className="h-20 md:hidden" />
                 </form>
             </main>
+
+            {createdOrder && (
+                <PixPaymentModal
+                    isOpen={isPixModalOpen}
+                    onClose={() => setIsPixModalOpen(false)} // If they close manually, they stay on checkout?? Or maybe redirect to status?
+                    orderId={createdOrder.id}
+                    totalAmount={createdOrder.total_amount} // This is now Final Total
+                    onSuccess={() => {
+                        clearCart(); // Clear cart only when payment is "confirmed" (simulated)
+                        setIsPixModalOpen(false);
+                        router.push(`/status/${createdOrder.id}`);
+                    }}
+                />
+            )}
         </div>
     );
 }

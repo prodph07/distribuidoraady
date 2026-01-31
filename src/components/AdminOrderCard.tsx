@@ -1,15 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Beer, Archive, Phone, Ban, MapPin, CheckCircle2, Link as LinkIcon, Share2 } from "lucide-react";
+import { Beer, Archive, Phone, Ban, MapPin, CheckCircle2, Link as LinkIcon, Share2, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Order } from "@/types";
 
-
-
-
 export function AdminOrderCard({ order, onUpdateStatus }: { order: Order; onUpdateStatus: (id: string, status: string) => void }) {
+    const [isExpanded, setIsExpanded] = useState(false);
     const hasExchange = order.order_items?.some((i) => i.is_exchange) || false;
+
+    // Calculate Profit
+    const totalCost = order.order_items?.reduce((acc, item: any) => {
+        const product = item.products;
+        if (!product) return acc;
+
+        const liquidCost = (product.cost_price || 0);
+        // If it's NOT an exchange (user bought the bottle), we count the bottle cost
+        // If it IS an exchange (user returned bottle), we don't count bottle cost (and we didn't charge deposit)
+        const bottleCost = !item.is_exchange ? (product.bottle_cost || 0) : 0;
+
+        return acc + ((liquidCost + bottleCost) * item.quantity);
+    }, 0) || 0;
+
+    const netProfit = order.total_amount - totalCost;
 
     const handleWhatsApp = () => {
         // "PEDIDO PAGO #99 📍 Rua X, Número Y ⚠️ ATENÇÃO: RECOLHER 5 GARRAFAS DE 600ML Link do GPS: [url]"
@@ -47,20 +61,23 @@ ${exchangeText}`;
     const renderActions = () => {
         if (order.status === 'pending_payment') {
             return (
-                <div className="flex gap-2 w-full mt-2">
+                <div className="flex flex-col gap-2 w-full mt-2">
                     <Button
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-900/20"
                         onClick={() => onUpdateStatus(order.id, 'preparing')}
                     >
-                        ✅ Aceitar Pedido
+                        💰 Simular Pagamento Recebido
                     </Button>
-                    <Button
-                        variant="destructive"
-                        className="flex-1 bg-red-600 hover:bg-red-700"
-                        onClick={() => onUpdateStatus(order.id, 'cancelled')}
-                    >
-                        ❌ Recusar
-                    </Button>
+                    <div className="flex gap-2">
+                        {/* Fallback Manual Accept if needed, though Simulate covers it */}
+                        <Button
+                            variant="destructive"
+                            className="flex-1 bg-red-600 hover:bg-red-700"
+                            onClick={() => onUpdateStatus(order.id, 'cancelled')}
+                        >
+                            ❌ Recusar / Cancelar
+                        </Button>
+                    </div>
                 </div>
             );
         }
@@ -99,59 +116,104 @@ ${exchangeText}`;
     };
 
     return (
-        <div className={cn("bg-neutral-800 border-l-4 rounded-r-lg shadow-sm p-4 space-y-4 border border-y-neutral-700 border-r-neutral-700 animate-in fade-in slide-in-from-bottom-2 duration-300", hasExchange ? "border-l-red-500 bg-red-900/10" : "border-l-green-500")}>
-            <div className="flex justify-between items-start">
-                <div>
-                    <h3 className="font-bold text-lg text-neutral-100 flex items-center gap-2">
-                        #{order.id}
-                        <span className="text-xs font-normal text-neutral-400 bg-neutral-700 px-2 py-0.5 rounded-full capitalize">
+        <div className={cn("bg-neutral-800 border-l-4 rounded-r-lg shadow-sm p-4 space-y-2 border border-y-neutral-700 border-r-neutral-700 animate-in fade-in slide-in-from-bottom-2 duration-300 transition-all", hasExchange ? "border-l-red-500 bg-red-900/5" : "border-l-green-500")}>
+
+            {/* Header: Essential Info (Always Visible) */}
+            <div className="flex justify-between items-start cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-lg text-neutral-100">
+                            #{order.id}
+                        </h3>
+                        <span className="text-[10px] font-bold text-neutral-400 bg-neutral-700 px-2 py-0.5 rounded-full capitalize">
                             {order.status.replace('_', ' ')}
                         </span>
-                    </h3>
-                    <p className="text-sm text-neutral-300 font-medium">{order.customer_name}</p>
-                    <p className="text-xs text-neutral-400 flex items-center gap-1 mt-1">
-                        <MapPin className="w-3 h-3" /> {order.address}
-                    </p>
-                </div>
-                <div className="flex flex-col items-end">
-                    {hasExchange ? (
-                        <div className="flex items-center gap-1 text-red-400 font-bold text-xs bg-red-900/30 px-2 py-1 rounded border border-red-900/50">
-                            <Beer className="w-4 h-4" /> RECOLHER CASCO
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-1 text-green-400 font-bold text-xs bg-green-900/30 px-2 py-1 rounded border border-green-900/50">
-                            <CheckCircle2 className="w-4 h-4" /> SEM TROCA
-                        </div>
-                    )}
-                    <span className="font-bold mt-1 text-xl text-neutral-200">R$ {order.total_amount.toFixed(2).replace(".", ",")}</span>
-                </div>
-            </div>
-
-            <div className="space-y-2 border-t border-dashed border-neutral-700 pt-2">
-                {order.order_items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-sm text-neutral-300">
-                        <span>{item.quantity}x {item.product?.name || `Item ${item.product_id}`}</span>
-                        <span className="font-medium text-xs uppercase px-2 py-0.5 rounded bg-neutral-700 text-neutral-300">
-                            {item.is_exchange ? '🔄 Troca' : '🆕 Casco'}
-                        </span>
+                        {/* Compact Exchange Warning */}
+                        {hasExchange && !isExpanded && (
+                            <div className="flex items-center gap-1 text-red-400 font-bold text-[10px] bg-red-900/30 px-2 py-0.5 rounded border border-red-900/50">
+                                <Beer size={10} /> REC. CASCO
+                            </div>
+                        )}
                     </div>
-                ))}
-            </div>
 
-            <div className="flex flex-col gap-2 pt-2 border-t border-neutral-700">
-                {/* Status Actions */}
-                {renderActions()}
+                    <p className="text-sm text-neutral-300 font-medium truncate max-w-[200px]">{order.customer_name}</p>
+                    <p className="text-xs text-neutral-400 flex items-center gap-1 mt-1 truncate max-w-[200px]">
+                        <MapPin className="w-3 h-3 text-neutral-500" /> {order.address}
+                    </p>
+                    <div className="space-y-1 mt-2">
+                        {order.order_items?.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-1 text-xs text-neutral-300">
+                                <span className={item.is_exchange ? "text-yellow-200 font-medium" : ""}>
+                                    {item.quantity}x
+                                </span>
+                                <span className={cn("truncate max-w-[150px]", item.is_exchange ? "text-yellow-200" : "")}>
+                                    {(item as any).products?.name || `Item`}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
-                {/* Utils */}
-                <div className="flex gap-2 mt-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent hover:bg-neutral-700 text-neutral-400 border-neutral-600" onClick={handleCopyLink}>
-                        <LinkIcon className="w-4 h-4 mr-2" /> Copiar Link
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1 bg-green-900/20 hover:bg-green-900/40 text-green-400 border-green-900/50" onClick={handleWhatsApp}>
-                        <Share2 className="w-4 h-4 mr-2" /> Enviar Zap
-                    </Button>
+                <div className="flex flex-col items-end gap-1">
+                    <span className="font-bold text-lg text-neutral-200">
+                        R$ {order.total_amount.toFixed(2).replace(".", ",")}
+                    </span>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(!isExpanded);
+                        }}
+                        className="p-1 hover:bg-neutral-700 rounded-full text-neutral-500 transition-colors"
+                    >
+                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
                 </div>
             </div>
+
+            {/* Expanded Content */}
+            {isExpanded && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Full Exchange Info */}
+                    <div className="my-3">
+                        {hasExchange ? (
+                            <div className="flex items-center gap-1 text-red-400 font-bold text-xs bg-red-900/30 px-2 py-2 rounded border border-red-900/50 justify-center">
+                                <Beer className="w-4 h-4" /> ATENÇÃO: RECOLHER CASCO
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1 text-green-400 font-bold text-xs bg-green-900/30 px-2 py-2 rounded border border-green-900/50 justify-center">
+                                <CheckCircle2 className="w-4 h-4" /> SEM TROCA - CASCO PAGO
+                            </div>
+                        )}
+                    </div>
+
+
+
+                    {/* Financials & Actions */}
+                    <div className="flex flex-col gap-2 pt-2 border-t border-neutral-700">
+                        {/* Profit Display (Admin Only basically) */}
+                        <div className="flex justify-between items-center bg-neutral-900 border border-neutral-700 px-3 py-2 rounded text-xs mb-2">
+                            <span className="text-neutral-500">Lucro Líquido Estimado</span>
+                            <div className="flex items-center gap-1 font-bold">
+                                <TrendingUp size={12} className={netProfit > 0 ? "text-green-500" : "text-red-500"} />
+                                <span className={netProfit > 0 ? "text-green-500" : "text-red-500"}>R$ {netProfit.toFixed(2).replace('.', ',')}</span>
+                            </div>
+                        </div>
+
+                        {/* Status Actions */}
+                        {renderActions()}
+
+                        {/* Utils */}
+                        <div className="flex gap-2 mt-2">
+                            <Button variant="outline" size="sm" className="flex-1 bg-transparent hover:bg-neutral-700 text-neutral-400 border-neutral-600" onClick={handleCopyLink}>
+                                <LinkIcon className="w-4 h-4 mr-2" /> Copiar Link
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1 bg-green-900/20 hover:bg-green-900/40 text-green-400 border-green-900/50" onClick={handleWhatsApp}>
+                                <Share2 className="w-4 h-4 mr-2" /> Enviar Zap
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

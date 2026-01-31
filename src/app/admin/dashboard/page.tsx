@@ -1,5 +1,7 @@
 "use client";
 
+
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { AdminOrderCard } from "@/components/AdminOrderCard";
 import { Switch } from "@/components/ui/switch";
@@ -7,7 +9,7 @@ import { Product, Order, Category, Subcategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle } from "lucide-react";
+import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle, Search, CreditCard, Wallet } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
     const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
     const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [stockSearch, setStockSearch] = useState("");
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isReturnable, setIsReturnable] = useState(false);
 
@@ -49,10 +52,34 @@ export default function AdminDashboard() {
     const [couriers, setCouriers] = useState<any[]>([]);
     const [showStockAlert, setShowStockAlert] = useState(true);
 
-    // KPIs
-    const totalRevenue = orders.reduce((acc, order) => acc + (order.total || 0), 0);
-    const totalOrders = orders.length;
-    const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    // Stripe Logic Removed
+    const [stripeConnected, setStripeConnected] = useState(false); // Kept locally to avoid breaking render if referenced elsewhere, but unused.
+    // Actually better to fully remove.
+
+    // STates for Fees
+    const [deliveryFee, setDeliveryFee] = useState("5.00");
+    const [settingsId, setSettingsId] = useState<number | null>(null);
+
+    // KPI Filters
+    const deliveredOrders = orders.filter(o => o.status === 'delivered');
+    const totalRevenue = deliveredOrders.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+    const totalOrdersCount = orders.length; // Total orders in system (or maybe just today? keeping it simple as per original)
+    const avgTicket = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+
+    // Calculate Total Net Profit (Realtime)
+    const totalCost = deliveredOrders.reduce((acc, order) => {
+        const orderCost = order.order_items?.reduce((sum: number, item: any) => {
+            const p = item.products;
+            if (!p) return sum;
+
+            const liquidCost = (p.cost_price || 0);
+            const bottleCost = !item.is_exchange ? (p.bottle_cost || 0) : 0;
+            return sum + ((liquidCost + bottleCost) * item.quantity);
+        }, 0) || 0;
+        return acc + orderCost;
+    }, 0);
+
+    const totalNetProfit = totalRevenue - totalCost;
 
     const playNotificationSound = async () => {
         if (!audioRef.current || !soundEnabled) return;
@@ -112,6 +139,15 @@ export default function AdminDashboard() {
             console.log("Supabase Channel Cleanup");
             supabase.removeChannel(channel);
         };
+        const fetchSettings = async () => {
+            const { data } = await supabase.from('settings').select('*').single();
+            if (data) {
+                setDeliveryFee(data.delivery_fee.toString());
+                setSettingsId(data.id);
+            }
+        };
+
+        fetchSettings();
     }, []); // Removed soundEnabled dependency to avoid re-subscribing, handled in ref
 
     const fetchProducts = async () => {
@@ -128,7 +164,7 @@ export default function AdminDashboard() {
     };
 
     const fetchOrders = async () => {
-        // Fetch orders with items
+        // Fetch orders with items and product costs
         const { data: ordersData } = await supabase
             .from('orders')
             .select(`
@@ -136,7 +172,7 @@ export default function AdminDashboard() {
             order_items (
                 quantity,
                 is_exchange,
-                products ( name )
+                products ( name, cost_price, bottle_cost, deposit_price )
             )
         `)
             .order('created_at', { ascending: false });
@@ -409,6 +445,7 @@ export default function AdminDashboard() {
                                     <span>Vitrine</span>
                                 </div>
                             </button>
+                            {/* Financial Link Removed from Sidebar - Moved to Settings Tab */}
                         </nav>
                     </div>
 
@@ -480,12 +517,12 @@ export default function AdminDashboard() {
                 <section className="grid sm:grid-cols-3 gap-4">
                     <Card className="bg-neutral-800 border-neutral-700">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-neutral-400">Faturamento Hoje</CardTitle>
+                            <CardTitle className="text-sm font-medium text-neutral-400">Faturamento (Entregues)</CardTitle>
                             <DollarSign className="h-4 w-4 text-green-500" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">R$ {totalRevenue.toFixed(2).replace('.', ',')}</div>
-                            <p className="text-xs text-neutral-500">+20.1% em relação a ontem (mock)</p>
+                            <p className="text-xs text-neutral-500">Considerando apenas pedidos concluídos</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-neutral-800 border-neutral-700">
@@ -494,8 +531,8 @@ export default function AdminDashboard() {
                             <ShoppingBag className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{totalOrders}</div>
-                            <p className="text-xs text-neutral-500">4 pd pendentes agora</p>
+                            <div className="text-2xl font-bold">{totalOrdersCount}</div>
+                            <p className="text-xs text-neutral-500">{orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length} pd em andamento</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-neutral-800 border-neutral-700">
@@ -514,108 +551,30 @@ export default function AdminDashboard() {
                 {/* MAIN SECTION: ORDERS */}
                 {mainSection === 'orders' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {/* View Control Bar */}
                         <div className="flex justify-between items-center mb-6">
-                            <div className="bg-neutral-800 p-1 rounded-lg border border-neutral-700 inline-flex">
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-neutral-700 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
-                                >
-                                    <AlignJustify size={18} />
-                                    <span className="text-sm font-medium">Lista</span>
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('kanban')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-neutral-700 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
-                                >
-                                    <Grid size={18} />
-                                    <span className="text-sm font-medium">Kanban</span>
-                                </button>
-                            </div>
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                <ShoppingBag className="text-primary" /> Quadro de Pedidos
+                            </h2>
+                            {/* Removed List/Kanban Toggle as per request */}
                         </div>
 
-                        {viewMode === 'kanban' ? (
-                            <KanbanBoard orders={orders} onUpdateStatus={updateOrderStatus} />
-                        ) : (
-                            <Tabs defaultValue="all" className="w-full">
-                                <TabsList className="bg-neutral-800 border border-neutral-700 mb-6">
-                                    <TabsTrigger value="all">Todos ({orders.length})</TabsTrigger>
-                                    <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-500/20 data-[state=active]:text-yellow-400">
-                                        Pendentes ({pendingOrders.length})
-                                    </TabsTrigger>
-                                    <TabsTrigger value="preparing" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400">
-                                        Preparando ({orders.filter(o => o.status === 'preparing').length})
-                                    </TabsTrigger>
-                                    <TabsTrigger value="delivery" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">
-                                        Entrega ({deliveryOrders.length})
-                                    </TabsTrigger>
-                                    <TabsTrigger value="completed" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400">
-                                        Histórico
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="all" className="space-y-4">
-                                    {orders.length === 0 ? <p className="text-neutral-500">Sem pedidos.</p> : orders.map(order => <AdminOrderCard key={order.id} order={order} onUpdateStatus={updateOrderStatus} />)}
-                                </TabsContent>
-                                <TabsContent value="pending" className="space-y-4">
-                                    {pendingOrders.length === 0 ? <p className="text-neutral-500">Nenhum pedido pendente.</p> : pendingOrders.map(order => <AdminOrderCard key={order.id} order={order} onUpdateStatus={updateOrderStatus} />)}
-                                </TabsContent>
-                                <TabsContent value="preparing" className="space-y-4">
-                                    {orders.filter(o => o.status === 'preparing').map(order => <AdminOrderCard key={order.id} order={order} onUpdateStatus={updateOrderStatus} />)}
-                                    {orders.filter(o => o.status === 'preparing').length === 0 && <p className="text-neutral-500">Nenhum pedido em preparo.</p>}
-                                </TabsContent>
-                                <TabsContent value="delivery" className="space-y-4">
-                                    {deliveryOrders.length === 0 ? <p className="text-neutral-500">Nada em entrega.</p> : deliveryOrders.map(order => <AdminOrderCard key={order.id} order={order} onUpdateStatus={updateOrderStatus} />)}
-                                </TabsContent>
-                                <TabsContent value="completed" className="space-y-4">
-                                    {completedOrders.length === 0 ? <p className="text-neutral-500">Histórico vazio.</p> : completedOrders.map(order => <AdminOrderCard key={order.id} order={order} onUpdateStatus={updateOrderStatus} />)}
-                                </TabsContent>
-                            </Tabs>
-                        )}
+                        <KanbanBoard orders={orders} onUpdateStatus={updateOrderStatus} />
                     </div>
                 )}
 
                 {mainSection === 'stock' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <Database className="w-6 h-6 text-primary" /> Gerenciamento de Estoque
-                                </h2>
-                                <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide max-w-full">
-                                    <Button
-                                        variant={selectedCategory === 'Todas' ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => {
-                                            setSelectedCategory('Todas');
-                                            setSelectedSubcategory(null);
-                                        }}
-                                        className={selectedCategory === 'Todas' ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
-                                    >
-                                        Todas
-                                    </Button>
-                                    {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(cat => (
-                                        <Button
-                                            key={cat}
-                                            variant={selectedCategory === cat ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedCategory(cat as string);
-                                                setSelectedSubcategory(null);
-                                            }}
-                                            className={selectedCategory === cat ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
-                                        >
-                                            {cat}
-                                        </Button>
-                                    ))}
-                                    <Button variant="ghost" size="sm" onClick={fetchProducts} className="text-neutral-400 hover:text-white ml-2">
-                                        ↻
-                                    </Button>
+                            <div className="mb-6 space-y-4">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <Database className="w-6 h-6 text-primary" /> Gerenciamento de Estoque
+                                    </h2>
 
-                                    {/* Manage Categories Modal */}
+                                    {/* Manage Categories Modal Trigger */}
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm" className="ml-2 border-neutral-700 hover:bg-neutral-800">
+                                            <Button variant="outline" size="sm" className="border-neutral-700 hover:bg-neutral-800">
                                                 <Settings className="w-4 h-4 mr-2" /> Gerenciar Categorias
                                             </Button>
                                         </DialogTrigger>
@@ -656,7 +615,7 @@ export default function AdminDashboard() {
                                                     </form>
                                                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                                                         {subcategories.map(sc => {
-                                                            const parent = categories.find(c => c.id === sc.category_id);
+                                                            const parent = categories.find(c => c.name === selectedCategory);
                                                             return (
                                                                 <div key={sc.id} className="flex justify-between items-center bg-neutral-950 p-2 rounded border border-neutral-800">
                                                                     <div className="flex flex-col">
@@ -673,11 +632,51 @@ export default function AdminDashboard() {
                                         </DialogContent>
                                     </Dialog>
                                 </div>
+
+                                {/* Search Bar */}
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+                                    <Input
+                                        placeholder="Buscar produtos no estoque..."
+                                        className="pl-9 bg-neutral-900 border-neutral-700"
+                                        value={stockSearch}
+                                        onChange={(e) => setStockSearch(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Category Filters (Wrapped) */}
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        variant={selectedCategory === 'Todas' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => {
+                                            setSelectedCategory('Todas');
+                                            setSelectedSubcategory(null);
+                                        }}
+                                        className={selectedCategory === 'Todas' ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
+                                    >
+                                        Todas
+                                    </Button>
+                                    {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(cat => (
+                                        <Button
+                                            key={cat}
+                                            variant={selectedCategory === cat ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => {
+                                                setSelectedCategory(cat as string);
+                                                setSelectedSubcategory(null);
+                                            }}
+                                            className={selectedCategory === cat ? "bg-primary text-black hover:bg-yellow-500" : "border-neutral-600 text-neutral-400"}
+                                        >
+                                            {cat}
+                                        </Button>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Subfilters */}
                             {selectedCategory !== 'Todas' && (
-                                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                                <div className="flex flex-wrap gap-2 mb-6">
                                     <div className="text-sm text-neutral-500 flex items-center mr-2">Filtros:</div>
                                     <button
                                         onClick={() => setSelectedSubcategory(null)}
@@ -705,6 +704,7 @@ export default function AdminDashboard() {
 
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {products.filter(p => {
+                                    if (stockSearch && !p.name.toLowerCase().includes(stockSearch.toLowerCase())) return false;
                                     if (selectedCategory !== 'Todas' && p.category !== selectedCategory) return false;
                                     if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
                                     return true;
@@ -922,7 +922,7 @@ export default function AdminDashboard() {
                                                         <div className="w-24 h-2 bg-neutral-700 rounded-full overflow-hidden">
                                                             <div
                                                                 className="h-full bg-primary"
-                                                                style={{ width: `${((count as number) / totalOrders) * 100}%` }}
+                                                                style={{ width: `${((count as number) / totalOrdersCount) * 100}%` }}
                                                             />
                                                         </div>
                                                         <span className="text-xs text-neutral-400 font-mono w-6 text-right">{count as number}</span>
@@ -936,24 +936,25 @@ export default function AdminDashboard() {
                                 {/* Profit Estimator */}
                                 <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
                                     <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
-                                        <DollarSign className="w-5 h-5 text-green-500" /> Estimativa de Lucro
+                                        <DollarSign className="w-5 h-5 text-green-500" /> Lucro Líquido Real (Entregues)
                                     </h3>
                                     <div className="flex flex-col gap-4">
                                         <div className="p-4 bg-neutral-900 rounded-lg">
                                             <span className="text-neutral-500 text-xs uppercase font-bold">Faturamento Bruto</span>
-                                            <div className="text-2xl font-bold text-white">R$ {totalRevenue.toFixed(2)}</div>
+                                            <div className="text-2xl font-bold text-white">R$ {totalRevenue.toFixed(2).replace('.', ',')}</div>
                                         </div>
                                         <div className="p-4 bg-neutral-900 rounded-lg">
-                                            <span className="text-neutral-500 text-xs uppercase font-bold">Custo Estimado (Produtos)</span>
-                                            {/* Mock Calculation: Assume 60% is cost if not set, or sum product costs */}
+                                            <span className="text-neutral-500 text-xs uppercase font-bold">Custo Produtos (CMV)</span>
                                             <div className="text-2xl font-bold text-red-400">
-                                                - R$ {(totalRevenue * 0.6).toFixed(2)}
-                                                <span className="text-xs text-neutral-600 ml-2 font-normal">(aprox. 60%)</span>
+                                                - R$ {totalCost.toFixed(2).replace('.', ',')}
+                                                <span className="text-xs text-neutral-600 ml-2 font-normal">
+                                                    ({totalRevenue > 0 ? ((totalCost / totalRevenue) * 100).toFixed(0) : 0}%)
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="p-4 bg-green-900/20 border border-green-900/50 rounded-lg">
-                                            <span className="text-green-500 text-xs uppercase font-bold">Lucro Líquido Estimado</span>
-                                            <div className="text-3xl font-black text-green-400">R$ {(totalRevenue * 0.4).toFixed(2)}</div>
+                                            <span className="text-green-500 text-xs uppercase font-bold">Lucro Líquido</span>
+                                            <div className="text-3xl font-black text-green-400">R$ {totalNetProfit.toFixed(2).replace('.', ',')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -989,10 +990,62 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-neutral-900/50 rounded-lg border border-neutral-800">
-                                        <h3 className="font-bold text-neutral-300 mb-2">Sobre o Sistema</h3>
-                                        <p className="text-sm text-neutral-500">Versão: 1.0.0 (Admin 4.0)</p>
-                                        <p className="text-sm text-neutral-500">Ambiente: {process.env.NODE_ENV}</p>
+                                    <div className="pt-8 border-t border-neutral-700 space-y-6">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-neutral-200 flex items-center gap-2">
+                                                <Truck className="w-5 h-5 text-blue-500" /> Entregas & Taxas
+                                            </h3>
+                                            <p className="text-neutral-400 text-sm mb-4">Gerencie o valor cobrado pela entrega e suas comissões.</p>
+
+                                            <div className="flex flex-col gap-6">
+                                                <div className="bg-neutral-900 border border-neutral-700 p-4 rounded-lg flex items-center justify-between">
+                                                    <div>
+                                                        <Label className="text-neutral-300 font-bold mb-1 block">Taxa de Entrega do Motoboy</Label>
+                                                        <p className="text-xs text-neutral-500">Valor fixo cobrado do cliente</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-neutral-500 font-bold">R$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.50"
+                                                            className="bg-neutral-950 border border-neutral-700 text-white font-bold p-2 rounded w-24 text-right"
+                                                            value={deliveryFee}
+                                                            onChange={(e) => setDeliveryFee(e.target.value)}
+                                                            onBlur={async () => {
+                                                                if (!settingsId) return;
+                                                                await supabase.from('settings').update({ delivery_fee: parseFloat(deliveryFee) }).eq('id', settingsId);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-neutral-900 border border-neutral-700 p-4 rounded-lg flex items-center justify-between">
+                                                    <div>
+                                                        <Label className="text-neutral-300 font-bold mb-1 block">Minhas Comissões</Label>
+                                                        <p className="text-xs text-neutral-500">Defina quanto você ganha por pedido (% ou Valor fixo)</p>
+                                                    </div>
+                                                    <Link href="/admin/financeiro">
+                                                        <Button variant="outline" className="border-green-800 text-green-400 hover:bg-green-900/20">
+                                                            <DollarSign className="w-4 h-4 mr-2" />
+                                                            Configurar Comissões
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-4 border-t border-neutral-700">
+                                        <div>
+                                            <label className="text-lg font-semibold block text-neutral-200">Pagamentos Online (Stripe)</label>
+
+
+                                            <div className="p-4 bg-neutral-900/50 rounded-lg border border-neutral-800">
+                                                <h3 className="font-bold text-neutral-300 mb-2">Sobre o Sistema</h3>
+                                                <p className="text-sm text-neutral-500">Versão: 1.0.0 (Admin 4.0)</p>
+                                                <p className="text-sm text-neutral-500">Ambiente: {process.env.NODE_ENV}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

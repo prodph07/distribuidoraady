@@ -6,6 +6,7 @@ import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { ProductExchangeDialog } from "./ProductExchangeDialog";
+import { ImageIcon } from "lucide-react";
 
 interface ProductCardProps {
     product: Product;
@@ -31,13 +32,20 @@ export function ProductCard({ product }: ProductCardProps) {
         <>
             <div className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border flex flex-col h-full group transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="relative aspect-square bg-white p-4 overflow-hidden flex items-center justify-center">
-                    <Image
-                        src={product.image_url}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-2 transition-transform group-hover:scale-110"
-                        sizes="(max-width: 768px) 50vw, 33vw"
-                    />
+                    {product.image_url ? (
+                        <Image
+                            src={product.image_url}
+                            alt={product.name}
+                            fill
+                            className="object-contain p-2 transition-transform group-hover:scale-110"
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center w-full h-full text-neutral-200">
+                            <ImageIcon size={48} strokeWidth={1.5} />
+                        </div>
+                    )}
+
                     {product.is_returnable && (
                         <div className="absolute top-3 right-3 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-red-200">
                             Retornável
