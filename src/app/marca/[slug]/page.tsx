@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const revalidate = 0;
+export const runtime = 'edge';
 
 interface BrandConfig {
     name: string;
