@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "check_db.ts",
-    "check_db.js"
+    "check_db.js",
+    "check_categories.ts"
   ]
 }
