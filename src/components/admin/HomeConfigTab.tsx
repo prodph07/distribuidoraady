@@ -17,6 +17,7 @@ interface CategoryItem {
     name: string;
     image_url: string;
     link: string;
+    active?: boolean;
 }
 
 function generateSlug(text: string) {
@@ -140,7 +141,7 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
             // 1. Upsert Collection
             let collectionId = colState?.id;
             const collectionData = {
-                title: slot === 1 ? 'Página Banner 1' : 'Página Banner 2',
+                title: colState?.title || (slot === 1 ? 'Página Banner 1' : 'Página Banner 2'),
                 slug: slot === 1 ? 'banner1' : 'banner2',
                 active: true,
                 description: colState?.description || ''
@@ -161,7 +162,7 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                 link_url: `/colecao/${slot === 1 ? 'banner1' : 'banner2'}`,
                 active: true,
                 position: 'main',
-                title: slot === 1 ? 'Banner 1' : 'Banner 2',
+                title: bannerState?.title || (slot === 1 ? 'Banner 1' : 'Banner 2'),
                 order_index: slot // Ensure order
             };
 
@@ -400,12 +401,12 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                 ...config,
                 title: config.title || "Vai de quê hoje?",
                 categories: [
-                    { name: "Cervejas", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD_JITFTiiGTQ1HBww5q6StFd8Yj72KWswM_cMKfRJjnW8K8S2vAsxAvKViWMaY5I6yFAXttvI3GdpEvbSibeZXnSQH7fv3hQncIBaQP2JsGemomAs7Ofl9P3sWk4maBPOZKFcKjWHf5h9v_DXcxSYrDcMnTJqbltrr-m1vfkTVQNWk5rz-gSfOdRykJzjNFZWGy0claj-Hk6eORUAVt-_G4DoUr5StL6gQQEF4GU-W_rzQ946tCfV6rIc4HfYFf7nmIbBAF-7DSJ1I", link: "/categoria/cervejas" },
-                    { name: "Vinhos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9nXrEFIPYTTI8LcUxrVtNOKnvd9GteaKhcmGNQ-SmN0mVuoFzayTYAbZ15y-hHofXiVkEpjhqBTPESeVB4_2OXDprGiPQi2FkLjUZ3sN5XesYvoh1MpOrio3IOtL0szEiaYKAZD_hNRM_qqPqZXuyYqV_Q7kixpqYNijTs-6xgY_cFJjttP9x7xtBIeNLZvt1Mth336nsMvdGkyMfa2jO4HgnECTuWoF-gUJE-WJfoYv342OsG25KV62QDspQhCaYTIPsVTzLBS_F", link: "/categoria/vinhos" },
-                    { name: "Destilados", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0BQQv-8IMDZwzNDRm15xqgIyn8qrHAYEYDauqTLJkJXFaFB6AvQf4vBkEhJUNz-C96sURbRkTF_ehbng7VgLIGjEDDL8WOCjQF-6GwxCywifzhPZEM4C_uFcAT7Dvenbt6c7FnU4gVTfRm2CT1WICH3N1n3SZeQRZdrMFOisxva1sX3pRT0MOAgFEkP_6ZJSxKJPbEATc0_EZpaTrgguBx-8JzuoGtG5BeSBgy4nyUGn6WyOAnaxVtGHMlmAh4dSRvYrhfebEaN2s", link: "/categoria/destilados" },
-                    { name: "Sem Álcool", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuColwoRCLq32gm_WrugtArYUhfRsh6a9-yPrZkJuQjBb28DjCd4YI3uML-C5JsHqUX0y8u51V2IDxDEpulWyqSGBbdGAqTf8qw8Rk5JVoMmzTmbIG6okfV0hzWCieG1k_bt2rIpToUpO8NmW7AeEO6v56kVMh099APACvFHdWeaRLMTPzbeo2TlY4K4BAk5lYWHNIbJhumfEtlzotyP46jPNhdRgT39AnX40uJTwme-8f1L3zFw4Oj_YG3iX7M8M3YHh4eiGxckDcjJ", link: "/categoria/sem-alcool" },
-                    { name: "Petiscos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCoDOQqqoGxQNIwl5nbNndV3civTy4DKaDxt7KAts7S0TKADibkP5QJxkgFCtADMPXHWqgkkZled-Vxz8BcXokj1aC4lFbNHEdHadxnFhGEAf7YlRS6FHqQ4j9smhyLlCFNUeY5iSseCsQshVwQo9P6K_CAhCuUJ-bQiJZcuk53V4s9GcS5v3vxnLeaQ15bi9d5wIMeXFVlSJiB0V7MyXmpm4q_Wu16qkAsIomQnkA-trukFsnqncrNW9zu-8dmZ6fcNh6LdV0UfN4t", link: "/categoria/petiscos" },
-                    { name: "Outros", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0rMU28MOIEHh_QwZTV3UgTZ0WIFfJvzWx4hOEriwqT5rByJN7tH6JF1eV-r8p9aGJI8ZbWFCWnk1xvsRmM2p8wvPFBgKu7hfqJ2EAbqznhYJfKtMEEhVyjCCsA_uYETG7tD7o0vLtdgw3oPNHT-6kyPraStzFeNG60s3Le2OmVxbNDlfmOXzX_hrwKKm7HysKjAX0T--HU3I4IdFDsw6hrLLr6nL8LOKRRv03DhE7O0JMGRQceVaSNImQxhtExBuBIIg3b8txX9wn", link: "/categoria/outros" }
+                    { name: "Cervejas", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD_JITFTiiGTQ1HBww5q6StFd8Yj72KWswM_cMKfRJjnW8K8S2vAsxAvKViWMaY5I6yFAXttvI3GdpEvbSibeZXnSQH7fv3hQncIBaQP2JsGemomAs7Ofl9P3sWk4maBPOZKFcKjWHf5h9v_DXcxSYrDcMnTJqbltrr-m1vfkTVQNWk5rz-gSfOdRykJzjNFZWGy0claj-Hk6eORUAVt-_G4DoUr5StL6gQQEF4GU-W_rzQ946tCfV6rIc4HfYFf7nmIbBAF-7DSJ1I", link: "/categoria/cervejas", active: true },
+                    { name: "Vinhos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9nXrEFIPYTTI8LcUxrVtNOKnvd9GteaKhcmGNQ-SmN0mVuoFzayTYAbZ15y-hHofXiVkEpjhqBTPESeVB4_2OXDprGiPQi2FkLjUZ3sN5XesYvoh1MpOrio3IOtL0szEiaYKAZD_hNRM_qqPqZXuyYqV_Q7kixpqYNijTs-6xgY_cFJjttP9x7xtBIeNLZvt1Mth336nsMvdGkyMfa2jO4HgnECTuWoF-gUJE-WJfoYv342OsG25KV62QDspQhCaYTIPsVTzLBS_F", link: "/categoria/vinhos", active: true },
+                    { name: "Destilados", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0BQQv-8IMDZwzNDRm15xqgIyn8qrHAYEYDauqTLJkJXFaFB6AvQf4vBkEhJUNz-C96sURbRkTF_ehbng7VgLIGjEDDL8WOCjQF-6GwxCywifzhPZEM4C_uFcAT7Dvenbt6c7FnU4gVTfRm2CT1WICH3N1n3SZeQRZdrMFOisxva1sX3pRT0MOAgFEkP_6ZJSxKJPbEATc0_EZpaTrgguBx-8JzuoGtG5BeSBgy4nyUGn6WyOAnaxVtGHMlmAh4dSRvYrhfebEaN2s", link: "/categoria/destilados", active: true },
+                    { name: "Sem Álcool", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuColwoRCLq32gm_WrugtArYUhfRsh6a9-yPrZkJuQjBb28DjCd4YI3uML-C5JsHqUX0y8u51V2IDxDEpulWyqSGBbdGAqTf8qw8Rk5JVoMmzTmbIG6okfV0hzWCieG1k_bt2rIpToUpO8NmW7AeEO6v56kVMh099APACvFHdWeaRLMTPzbeo2TlY4K4BAk5lYWHNIbJhumfEtlzotyP46jPNhdRgT39AnX40uJTwme-8f1L3zFw4Oj_YG3iX7M8M3YHh4eiGxckDcjJ", link: "/categoria/sem-alcool", active: true },
+                    { name: "Petiscos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCoDOQqqoGxQNIwl5nbNndV3civTy4DKaDxt7KAts7S0TKADibkP5QJxkgFCtADMPXHWqgkkZled-Vxz8BcXokj1aC4lFbNHEdHadxnFhGEAf7YlRS6FHqQ4j9smhyLlCFNUeY5iSseCsQshVwQo9P6K_CAhCuUJ-bQiJZcuk53V4s9GcS5v3vxnLeaQ15bi9d5wIMeXFVlSJiB0V7MyXmpm4q_Wu16qkAsIomQnkA-trukFsnqncrNW9zu-8dmZ6fcNh6LdV0UfN4t", link: "/categoria/petiscos", active: true },
+                    { name: "Outros", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0rMU28MOIEHh_QwZTV3UgTZ0WIFfJvzWx4hOEriwqT5rByJN7tH6JF1eV-r8p9aGJI8ZbWFCWnk1xvsRmM2p8wvPFBgKu7hfqJ2EAbqznhYJfKtMEEhVyjCCsA_uYETG7tD7o0vLtdgw3oPNHT-6kyPraStzFeNG60s3Le2OmVxbNDlfmOXzX_hrwKKm7HysKjAX0T--HU3I4IdFDsw6hrLLr6nL8LOKRRv03DhE7O0JMGRQceVaSNImQxhtExBuBIIg3b8txX9wn", link: "/categoria/outros", active: true }
                 ]
             };
         }
@@ -433,31 +434,50 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                     <ImageIcon className="text-primary" /> Banners da Home (Destaques)
                 </h2>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Banner 1 */}
                     <Card className="bg-neutral-900 border-neutral-800">
                         <CardHeader>
-                            <CardTitle className="text-sm">Banner Destaque 1</CardTitle>
+                            <Input
+                                value={banner1Collection?.title || 'Banner Destaque 1'}
+                                onChange={e => setBanner1Collection(prev => ({ ...prev!, title: e.target.value }))}
+                                className="mb-2 font-bold bg-transparent border-transparent hover:border-neutral-800 text-lg p-0 h-auto focus-visible:ring-0 focus:border-neutral-700 transition-all"
+                                placeholder="Título da Página"
+                            />
+                            <Label className="text-xs text-neutral-500 mb-1 block">Título do Banner (Alt Text)</Label>
+                            <Input
+                                value={banner1?.title || 'Banner 1'}
+                                onChange={e => setBanner1(prev => ({ ...prev!, title: e.target.value }))}
+                                className="mb-0 bg-transparent border-transparent hover:border-neutral-800 text-sm p-0 h-auto focus-visible:ring-0 focus:border-neutral-700 transition-all text-neutral-400"
+                                placeholder="Título interno do banner"
+                            />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
                                 <Label>Imagem do Banner</Label>
-                                <div className="flex gap-2 items-center">
-                                    <Input
+                                <div className="mt-2 mb-6">
+                                    <ImageUpload
                                         value={banner1?.image_url || ''}
-                                        onChange={e => setBanner1(prev => ({ ...prev!, image_url: e.target.value }))}
-                                        placeholder="URL da imagem..."
-                                        className="bg-neutral-800 border-neutral-700 font-mono text-xs"
+                                        className="w-full mb-2"
+                                        onChange={async (fileOrUrl) => {
+                                            if (fileOrUrl instanceof File) {
+                                                try {
+                                                    const url = await handleCategoryScanUpload(fileOrUrl);
+                                                    setBanner1(prev => ({ ...prev!, image_url: url }));
+                                                } catch (e) { alert("Erro no upload"); }
+                                            } else {
+                                                setBanner1(prev => ({ ...prev!, image_url: fileOrUrl as string }));
+                                            }
+                                        }}
                                     />
-                                    {banner1?.image_url && <img src={banner1.image_url} className="h-8 w-12 object-cover rounded bg-neutral-800" />}
                                 </div>
                             </div>
 
                             <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800">
                                 <Label className="text-xs text-neutral-400 mb-2 block">Página de Destino: /colecao/banner1</Label>
-                                <div className="flex justify-between items-center">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                     <span className="text-sm font-bold">Produtos da Página</span>
-                                    <Button size="sm" variant="secondary" onClick={() => handleOpenProductSelectorForBanner(1)}>
+                                    <Button size="sm" variant="secondary" onClick={() => handleOpenProductSelectorForBanner(1)} className="w-full sm:w-auto">
                                         <Grid size={14} className="mr-2" />
                                         Selecionar Produtos
                                     </Button>
@@ -473,27 +493,46 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                     {/* Banner 2 */}
                     <Card className="bg-neutral-900 border-neutral-800">
                         <CardHeader>
-                            <CardTitle className="text-sm">Banner Destaque 2</CardTitle>
+                            <Input
+                                value={banner2Collection?.title || 'Banner Destaque 2'}
+                                onChange={e => setBanner2Collection(prev => ({ ...prev!, title: e.target.value }))}
+                                className="mb-2 font-bold bg-transparent border-transparent hover:border-neutral-800 text-lg p-0 h-auto focus-visible:ring-0 focus:border-neutral-700 transition-all"
+                                placeholder="Título da Página"
+                            />
+                            <Label className="text-xs text-neutral-500 mb-1 block">Título do Banner (Alt Text)</Label>
+                            <Input
+                                value={banner2?.title || 'Banner 2'}
+                                onChange={e => setBanner2(prev => ({ ...prev!, title: e.target.value }))}
+                                className="mb-0 bg-transparent border-transparent hover:border-neutral-800 text-sm p-0 h-auto focus-visible:ring-0 focus:border-neutral-700 transition-all text-neutral-400"
+                                placeholder="Título interno do banner"
+                            />
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
                                 <Label>Imagem do Banner</Label>
-                                <div className="flex gap-2 items-center">
-                                    <Input
+                                <div className="mt-2 mb-6">
+                                    <ImageUpload
                                         value={banner2?.image_url || ''}
-                                        onChange={e => setBanner2(prev => ({ ...prev!, image_url: e.target.value }))}
-                                        placeholder="URL da imagem..."
-                                        className="bg-neutral-800 border-neutral-700 font-mono text-xs"
+                                        className="w-full mb-2"
+                                        onChange={async (fileOrUrl) => {
+                                            if (fileOrUrl instanceof File) {
+                                                try {
+                                                    const url = await handleCategoryScanUpload(fileOrUrl);
+                                                    setBanner2(prev => ({ ...prev!, image_url: url }));
+                                                } catch (e) { alert("Erro no upload"); }
+                                            } else {
+                                                setBanner2(prev => ({ ...prev!, image_url: fileOrUrl as string }));
+                                            }
+                                        }}
                                     />
-                                    {banner2?.image_url && <img src={banner2.image_url} className="h-8 w-12 object-cover rounded bg-neutral-800" />}
                                 </div>
                             </div>
 
                             <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800">
                                 <Label className="text-xs text-neutral-400 mb-2 block">Página de Destino: /colecao/banner2</Label>
-                                <div className="flex justify-between items-center">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                     <span className="text-sm font-bold">Produtos da Página</span>
-                                    <Button size="sm" variant="secondary" onClick={() => handleOpenProductSelectorForBanner(2)}>
+                                    <Button size="sm" variant="secondary" onClick={() => handleOpenProductSelectorForBanner(2)} className="w-full sm:w-auto">
                                         <Grid size={14} className="mr-2" />
                                         Selecionar Produtos
                                     </Button>
@@ -597,7 +636,15 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                                     {(sectionConfigForm.categories || []).map((cat: CategoryItem, index: number) => (
                                         <div key={index} className="bg-neutral-900 p-3 rounded-lg border border-neutral-800 space-y-3 relative">
-                                            <div className="absolute right-2 top-2">
+                                            <div className="absolute right-2 top-2 flex items-center gap-2">
+                                                <Switch
+                                                    checked={cat.active !== false}
+                                                    onCheckedChange={(checked) => {
+                                                        const newCats = [...(sectionConfigForm.categories || [])];
+                                                        newCats[index].active = checked;
+                                                        setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                    }}
+                                                />
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -668,7 +715,7 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                                     variant="outline"
                                     className="w-full border-dashed border-neutral-700 hover:bg-neutral-900"
                                     onClick={() => {
-                                        const newCats = [...(sectionConfigForm.categories || []), { name: "Nova", image_url: "", link: "/categoria/nova" }];
+                                        const newCats = [...(sectionConfigForm.categories || []), { name: "Nova", image_url: "", link: "/categoria/nova", active: true }];
                                         setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
                                     }}
                                 >

@@ -177,29 +177,35 @@ export function ProductFormDialog({
                     <div className="grid grid-cols-2 gap-4">
                         {/* Liquid / Base Inputs */}
                         <div className="grid gap-2">
-                            <Label htmlFor="price">{isReturnable ? "Venda (Líquido/Refil)" : "Preço Venda (R$)"}</Label>
-                            <Input
-                                id="price"
-                                name="price"
-                                type="number"
-                                step="0.01"
-                                defaultValue={editingProduct?.price}
-                                placeholder="0.00"
-                                className="bg-neutral-800 border-neutral-700 text-white"
-                                required
-                            />
+                            <Label htmlFor="price">{isReturnable ? "Venda (Líquido/Refil)" : "Preço Venda"}</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-neutral-400 text-sm">R$</span>
+                                <Input
+                                    id="price"
+                                    name="price"
+                                    type="number"
+                                    step="0.01"
+                                    defaultValue={editingProduct?.price}
+                                    placeholder="0,00"
+                                    className="bg-neutral-800 border-neutral-700 text-white pl-9"
+                                    required
+                                />
+                            </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="cost_price">{isReturnable ? "Custo (Líquido)" : "Preço Custo (R$)"}</Label>
-                            <Input
-                                id="cost_price"
-                                name="cost_price"
-                                type="number"
-                                step="0.01"
-                                defaultValue={editingProduct?.cost_price || ""}
-                                placeholder="0.00"
-                                className="bg-neutral-800 border-neutral-700 text-white"
-                            />
+                            <Label htmlFor="cost_price">{isReturnable ? "Custo (Líquido)" : "Preço Custo"}</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-neutral-400 text-sm">R$</span>
+                                <Input
+                                    id="cost_price"
+                                    name="cost_price"
+                                    type="number"
+                                    step="0.01"
+                                    defaultValue={editingProduct?.cost_price || ""}
+                                    placeholder="0,00"
+                                    className="bg-neutral-800 border-neutral-700 text-white pl-9"
+                                />
+                            </div>
                         </div>
 
                         {/* Returnable Extra Inputs - HIDDEN (We don't sell bottles anymore, only liquid) */}

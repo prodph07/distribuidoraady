@@ -200,13 +200,15 @@ export function StockManager({
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 text-sm">
                                             <span className="text-neutral-400 w-12">Venda:</span>
-                                            <span className="font-bold text-neutral-200">R$ {product.price?.toFixed(2)}</span>
+                                            <span className="font-bold text-neutral-200">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price || 0)}
+                                            </span>
                                         </div>
                                         {(product.cost_price || 0) > 0 && (
                                             <div className="flex items-center gap-2 text-xs">
                                                 <span className="text-neutral-500 w-12">Lucro:</span>
                                                 <span className={`font-medium ${(product.price - (product.cost_price || 0)) > 0 ? "text-green-500" : "text-red-500"}`}>
-                                                    R$ {(product.price - (product.cost_price || 0)).toFixed(2)}
+                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price - (product.cost_price || 0))}
                                                 </span>
                                             </div>
                                         )}

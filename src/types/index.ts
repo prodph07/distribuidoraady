@@ -38,7 +38,8 @@ export interface OrderItem {
     quantity: number;
     price_snapshot: number;
     is_exchange: boolean;
-    product?: Product; // joined
+    product?: Product; // joined (legacy/alias)
+    products?: Product; // joined from supabase (default)
 }
 
 export interface Order {
@@ -50,6 +51,7 @@ export interface Order {
     payment_id: string | null;
     total_amount: number;
     created_at: string;
+    archived?: boolean;
     order_items?: OrderItem[];
     total?: number; // legacy prop compatibility if needed, or alias total_amount
 }

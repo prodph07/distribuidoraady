@@ -9,7 +9,7 @@ import { Product, Order, Category, Subcategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle, Search, CreditCard, Wallet, Package } from "lucide-react";
+import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle, Search, CreditCard, Wallet, Package, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +28,11 @@ import { ProductFormDialog } from "@/components/admin/ProductFormDialog";
 import { HomeConfigTab } from "@/components/admin/HomeConfigTab";
 import { StockManager } from "@/components/admin/StockManager";
 import { ComboManager } from "@/components/admin/ComboManager";
+import { OrderHistory } from "@/components/admin/OrderHistory";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { CategoryManagerDialog } from "@/components/admin/CategoryManagerDialog";
+import { AdminKPIs } from "@/components/admin/AdminKPIs";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
@@ -51,38 +55,19 @@ export default function AdminDashboard() {
     const [realtimeStatus, setRealtimeStatus] = useState<string>("Conectando...");
     const [audioLocked, setAudioLocked] = useState(true); // Default to true to force initial interaction
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-    const [mainSection, setMainSection] = useState<'orders' | 'stock' | 'combos' | 'couriers' | 'analytics' | 'settings' | 'home-config'>('orders');
+    const [mainSection, setMainSection] = useState<'orders' | 'history' | 'stock' | 'combos' | 'couriers' | 'analytics' | 'finance' | 'settings' | 'home-config'>('orders');
     const [couriers, setCouriers] = useState<any[]>([]);
     const [showStockAlert, setShowStockAlert] = useState(true);
 
     // Stripe Logic Removed
-    const [stripeConnected, setStripeConnected] = useState(false); // Kept locally to avoid breaking render if referenced elsewhere, but unused.
-    // Actually better to fully remove.
+    const [stripeConnected, setStripeConnected] = useState(false);
 
     // STates for Fees
     const [deliveryFee, setDeliveryFee] = useState("5.00");
     const [settingsId, setSettingsId] = useState<number | null>(null);
 
-    // KPI Filters
-    const deliveredOrders = orders.filter(o => o.status === 'delivered');
-    const totalRevenue = deliveredOrders.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-    const totalOrdersCount = orders.length; // Total orders in system (or maybe just today? keeping it simple as per original)
-    const avgTicket = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
-
-    // Calculate Total Net Profit (Realtime)
-    const totalCost = deliveredOrders.reduce((acc, order) => {
-        const orderCost = order.order_items?.reduce((sum: number, item: any) => {
-            const p = item.products;
-            if (!p) return sum;
-
-            const liquidCost = (p.cost_price || 0);
-            const bottleCost = !item.is_exchange ? (p.bottle_cost || 0) : 0;
-            return sum + ((liquidCost + bottleCost) * item.quantity);
-        }, 0) || 0;
-        return acc + orderCost;
-    }, 0);
-
-    const totalNetProfit = totalRevenue - totalCost;
+    // KPI Calculations moved to AdminKPIs
+    // Realtime Profit logic removed as it belongs to AnalyticsDashboard now
 
     const playNotificationSound = async () => {
         if (!audioRef.current || !soundEnabled) return;
@@ -171,17 +156,19 @@ export default function AdminDashboard() {
         const { data: ordersData } = await supabase
             .from('orders')
             .select(`
-            *,
-            order_items (
-                quantity,
-                is_exchange,
-                products ( name, cost_price, bottle_cost, deposit_price )
-            )
-        `)
+                *,
+                order_items (
+                    quantity,
+                    is_exchange,
+                    products ( name, cost_price, bottle_cost, deposit_price )
+                )
+            `)
             .order('created_at', { ascending: false });
 
         if (ordersData) {
-            setOrders(ordersData as any);
+            // Client-side filter for now to avoid breaking if migration isn't run yet, 
+            // but ideally this should be .eq('archived', false) in the query
+            setOrders(ordersData.filter((o: any) => !o.archived) as any);
         }
     };
 
@@ -215,6 +202,35 @@ export default function AdminDashboard() {
             console.error("Failed to update status", error);
             alert("Erro ao atualizar status do pedido.");
             fetchOrders(); // Revert
+        }
+    };
+
+    const archiveCompletedOrders = async () => {
+        const completedIds = orders
+            .filter(o => o.status === 'delivered')
+            .map(o => o.id);
+
+        if (completedIds.length === 0) {
+            alert("Não há pedidos concluídos para limpar.");
+            return;
+        }
+
+        if (!confirm(`Deseja arquivar ${completedIds.length} pedidos concluídos? Eles sairão desta tela e irão para o Histórico.`)) return;
+
+        // Optimistic update
+        setOrders(prev => prev.filter(o => o.status !== 'delivered'));
+
+        const { error } = await supabase
+            .from('orders')
+            .update({ archived: true })
+            .in('id', completedIds);
+
+        if (error) {
+            console.error("Error archiving orders", error);
+            alert("Erro ao arquivar pedidos.");
+            fetchOrders(); // Revert
+        } else {
+            // alert("Pedidos arquivados com sucesso!");
         }
     };
 
@@ -336,7 +352,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-neutral-950 text-neutral-200 pb-20">
-            {/* Top Bar */}
             {/* Top Bar / Navbar */}
             <header className="bg-neutral-800 border-b border-neutral-700 sticky top-0 z-20 shadow-sm">
                 <div className="container mx-auto px-6 h-16 flex justify-between items-center">
@@ -353,93 +368,8 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Main Navigation */}
-                        <nav className="flex items-center gap-1 bg-neutral-900/50 p-1 rounded-lg border border-neutral-700/50">
-                            <button
-                                onClick={() => setMainSection('orders')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'orders'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <ShoppingBag size={16} />
-                                    <span>Pedidos</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('stock')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'stock'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Database size={16} />
-                                    <span>Estoque</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('combos')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'combos'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Package size={16} />
-                                    <span>Combos</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('couriers')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'couriers'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Truck size={16} />
-                                    <span>Motoboys</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('analytics')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'analytics'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <PieChart size={16} />
-                                    <span>Relatórios</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('settings')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'settings'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Settings size={16} />
-                                    <span>Config</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setMainSection('home-config')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'home-config'
-                                    ? 'bg-neutral-700 text-white shadow-sm'
-                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Grid size={16} />
-                                    <span>Vitrine</span>
-                                </div>
-                            </button>
-                            {/* Financial Link Removed from Sidebar - Moved to Settings Tab */}
-                        </nav>
+                        {/* Main Navigation */}
+                        <AdminNavbar mainSection={mainSection} setMainSection={setMainSection} />
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -507,37 +437,8 @@ export default function AdminDashboard() {
             <main className="container mx-auto p-6 space-y-8">
 
                 {/* KPIs */}
-                <section className="grid sm:grid-cols-3 gap-4">
-                    <Card className="bg-neutral-800 border-neutral-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-neutral-400">Faturamento (Entregues)</CardTitle>
-                            <DollarSign className="h-4 w-4 text-green-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">R$ {totalRevenue.toFixed(2).replace('.', ',')}</div>
-                            <p className="text-xs text-neutral-500">Considerando apenas pedidos concluídos</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-neutral-800 border-neutral-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-neutral-400">Total Pedidos</CardTitle>
-                            <ShoppingBag className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalOrdersCount}</div>
-                            <p className="text-xs text-neutral-500">{orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length} pd em andamento</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-neutral-800 border-neutral-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-neutral-400">Ticket Médio</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-blue-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">R$ {avgTicket.toFixed(2).replace('.', ',')}</div>
-                        </CardContent>
-                    </Card>
-                </section>
+                {/* KPIs */}
+                <AdminKPIs orders={orders} />
 
                 {/* Main Content: Orders & Stock */}
 
@@ -548,10 +449,28 @@ export default function AdminDashboard() {
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 <ShoppingBag className="text-primary" /> Quadro de Pedidos
                             </h2>
-                            {/* Removed List/Kanban Toggle as per request */}
+
+                            <Button
+                                onClick={archiveCompletedOrders}
+                                variant="outline"
+                                className="border-neutral-700 hover:bg-neutral-800 text-neutral-300 gap-2"
+                                title="Arquivar pedidos concluídos (mover para Histórico)"
+                            >
+                                <Trash2 size={16} />
+                                <span className="hidden sm:inline">Limpar Concluídos</span>
+                            </Button>
                         </div>
+                        <p className="text-neutral-400 mb-4 text-sm">
+                            Exibindo apenas pedidos ativos. Use o botão "Limpar" para arquivar os concluídos.
+                        </p>
 
                         <KanbanBoard orders={orders} onUpdateStatus={updateOrderStatus} />
+                    </div>
+                )}
+
+                {mainSection === 'history' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <OrderHistory />
                     </div>
                 )}
 
@@ -646,92 +565,7 @@ export default function AdminDashboard() {
                 {
                     mainSection === 'analytics' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
-
-                            {/* Stock Alert Widget */}
-                            {products.some(p => (p.stock_quantity || 0) < 10) && (
-                                <div className="bg-red-900/20 border border-red-900/50 p-4 rounded-xl flex items-start gap-4">
-                                    <div className="bg-red-900/50 p-2 rounded-full text-red-200 shrink-0">
-                                        <AlertTriangle size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-red-200">Alerta de Estoque Baixo</h3>
-                                        <p className="text-sm text-red-300/70 mb-2">Os seguintes produtos estão acabando:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {products.filter(p => (p.stock_quantity || 0) < 10).map(p => (
-                                                <span key={p.id} className="text-xs bg-red-950/50 text-red-200 px-2 py-1 rounded border border-red-900/50">
-                                                    {p.name} ({p.stock_quantity})
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {/* Heatmap (Top Locations) */}
-                                <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
-                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
-                                        <MapPin className="w-5 h-5 text-primary" /> Top Bairros
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {/* Mock Analytics Logic - Group by Address content */}
-                                        {Object.entries(
-                                            orders.reduce((acc: any, order) => {
-                                                // Simple clustering by taking first 15 chars of address or splitting by ','
-                                                const district = order.address ? order.address.split(',')[1]?.trim() || "Centro" : "Retirada";
-                                                acc[district] = (acc[district] || 0) + 1;
-                                                return acc;
-                                            }, {})
-                                        )
-                                            .sort(([, a], [, b]) => (b as number) - (a as number))
-                                            .slice(0, 5)
-                                            .map(([district, count], i) => (
-                                                <div key={district} className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-bold text-neutral-500 w-4 text-center">{i + 1}</span>
-                                                        <span className="text-neutral-200">{district}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-24 h-2 bg-neutral-700 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-primary"
-                                                                style={{ width: `${((count as number) / totalOrdersCount) * 100}%` }}
-                                                            />
-                                                        </div>
-                                                        <span className="text-xs text-neutral-400 font-mono w-6 text-right">{count as number}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        {orders.length === 0 && <p className="text-neutral-500 text-sm">Sem dados suficientes.</p>}
-                                    </div>
-                                </div>
-
-                                {/* Profit Estimator */}
-                                <div className="bg-neutral-800 rounded-xl border border-neutral-700 p-6">
-                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
-                                        <DollarSign className="w-5 h-5 text-green-500" /> Lucro Líquido Real (Entregues)
-                                    </h3>
-                                    <div className="flex flex-col gap-4">
-                                        <div className="p-4 bg-neutral-900 rounded-lg">
-                                            <span className="text-neutral-500 text-xs uppercase font-bold">Faturamento Bruto</span>
-                                            <div className="text-2xl font-bold text-white">R$ {totalRevenue.toFixed(2).replace('.', ',')}</div>
-                                        </div>
-                                        <div className="p-4 bg-neutral-900 rounded-lg">
-                                            <span className="text-neutral-500 text-xs uppercase font-bold">Custo Produtos (CMV)</span>
-                                            <div className="text-2xl font-bold text-red-400">
-                                                - R$ {totalCost.toFixed(2).replace('.', ',')}
-                                                <span className="text-xs text-neutral-600 ml-2 font-normal">
-                                                    ({totalRevenue > 0 ? ((totalCost / totalRevenue) * 100).toFixed(0) : 0}%)
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 bg-green-900/20 border border-green-900/50 rounded-lg">
-                                            <span className="text-green-500 text-xs uppercase font-bold">Lucro Líquido</span>
-                                            <div className="text-3xl font-black text-green-400">R$ {totalNetProfit.toFixed(2).replace('.', ',')}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <AnalyticsDashboard />
                         </div>
                     )
                 }
@@ -825,8 +659,7 @@ export default function AdminDashboard() {
                         </div>
                     )
                 }
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
-

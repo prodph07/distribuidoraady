@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 export const revalidate = 0; // Disable cache for demo purposes
 export const runtime = 'edge';
 
+import { ProductCarousel } from "@/components/ProductCarousel";
+
 export default async function Home() {
   // Fetch Home Sections Configuration
   const { data: homeSectionsData } = await supabase
@@ -200,51 +202,30 @@ export default async function Home() {
           {/* Dynamic Featured Collections (Remaining) */}
           {featuredCollections && featuredCollections.slice(1).map(collection => (
             collection.collection_items && collection.collection_items.length > 0 && (
-              <section key={collection.id}>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100">{collection.title}</h2>
-                  <Link href={`/colecao/${collection.slug}`} className="text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-primary transition-colors flex items-center">
-                    Ver todos <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {collection.collection_items.slice(0, 5).map((item: any) => (
-                    item.product && <ProductCard key={item.product.id} product={item.product} />
-                  ))}
-                </div>
-              </section>
+              <ProductCarousel
+                key={collection.id}
+                title={collection.title}
+                products={collection.collection_items.map((item: any) => item.product).filter(Boolean)}
+                viewAllLink={`/colecao/${collection.slug}`}
+              />
             )
           ))}
 
           {/* Recommended (Dynamic from Spirits/Beers) */}
           {sectionsMap['recommended']?.active && spirits.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100">{sectionsMap['recommended'].config?.title || "Recomendados pelo Ady"}</h2>
-                <a href="#" className="text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-primary transition-colors flex items-center">
-                  Ver todos <ChevronRight className="w-4 h-4 ml-1" />
-                </a>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {spirits.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
+            <ProductCarousel
+              title={sectionsMap['recommended'].config?.title || "Recomendados pelo Ady"}
+              products={spirits}
+              viewAllLink="#"
+            />
           )}
 
           {/* Beers */}
           {sectionsMap['beers']?.active && beers.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100">{sectionsMap['beers'].config?.title || "Cervejas Geladas"}</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {beers.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
+            <ProductCarousel
+              title={sectionsMap['beers'].config?.title || "Cervejas Geladas"}
+              products={beers}
+            />
           )}
 
           {/* Carnaval Banner */}
