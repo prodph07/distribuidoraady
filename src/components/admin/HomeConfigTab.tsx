@@ -8,8 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, Image as ImageIcon, Link as LinkIcon, Save, Pencil, X } from "lucide-react";
+import { Trash2, Plus, Image as ImageIcon, Link as LinkIcon, Save, Pencil, X, Check, Grid, Settings, ToggleLeft, Search, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { compressImage } from "@/lib/imageUtils";
+
+interface CategoryItem {
+    name: string;
+    image_url: string;
+    link: string;
+}
 
 function generateSlug(text: string) {
     return text
@@ -56,6 +64,19 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
 
     // Helper: Get unique categories
     const categories = ["all", ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+
+    // Helper for uploading category images
+    const handleCategoryScanUpload = async (file: File) => {
+        const compressedBlob = await compressImage(file);
+        const compressedFile = new File([compressedBlob], "cat.jpg", { type: "image/jpeg" });
+        const fileName = `category-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+
+        const { error } = await supabase.storage.from("products").upload(fileName, compressedFile);
+        if (error) throw error;
+
+        const { data } = supabase.storage.from("products").getPublicUrl(fileName);
+        return data.publicUrl;
+    };
 
     const filteredProducts = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -371,7 +392,25 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
 
     const handleOpenSectionConfig = (section: HomeSection) => {
         setEditingSection(section);
-        setSectionConfigForm(section.config || {});
+        let config = section.config || {};
+
+        // Pre-fill default categories if empty
+        if (section.slug === 'categories' && (!config.categories || config.categories.length === 0)) {
+            config = {
+                ...config,
+                title: config.title || "Vai de quê hoje?",
+                categories: [
+                    { name: "Cervejas", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD_JITFTiiGTQ1HBww5q6StFd8Yj72KWswM_cMKfRJjnW8K8S2vAsxAvKViWMaY5I6yFAXttvI3GdpEvbSibeZXnSQH7fv3hQncIBaQP2JsGemomAs7Ofl9P3sWk4maBPOZKFcKjWHf5h9v_DXcxSYrDcMnTJqbltrr-m1vfkTVQNWk5rz-gSfOdRykJzjNFZWGy0claj-Hk6eORUAVt-_G4DoUr5StL6gQQEF4GU-W_rzQ946tCfV6rIc4HfYFf7nmIbBAF-7DSJ1I", link: "/categoria/cervejas" },
+                    { name: "Vinhos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9nXrEFIPYTTI8LcUxrVtNOKnvd9GteaKhcmGNQ-SmN0mVuoFzayTYAbZ15y-hHofXiVkEpjhqBTPESeVB4_2OXDprGiPQi2FkLjUZ3sN5XesYvoh1MpOrio3IOtL0szEiaYKAZD_hNRM_qqPqZXuyYqV_Q7kixpqYNijTs-6xgY_cFJjttP9x7xtBIeNLZvt1Mth336nsMvdGkyMfa2jO4HgnECTuWoF-gUJE-WJfoYv342OsG25KV62QDspQhCaYTIPsVTzLBS_F", link: "/categoria/vinhos" },
+                    { name: "Destilados", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0BQQv-8IMDZwzNDRm15xqgIyn8qrHAYEYDauqTLJkJXFaFB6AvQf4vBkEhJUNz-C96sURbRkTF_ehbng7VgLIGjEDDL8WOCjQF-6GwxCywifzhPZEM4C_uFcAT7Dvenbt6c7FnU4gVTfRm2CT1WICH3N1n3SZeQRZdrMFOisxva1sX3pRT0MOAgFEkP_6ZJSxKJPbEATc0_EZpaTrgguBx-8JzuoGtG5BeSBgy4nyUGn6WyOAnaxVtGHMlmAh4dSRvYrhfebEaN2s", link: "/categoria/destilados" },
+                    { name: "Sem Álcool", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuColwoRCLq32gm_WrugtArYUhfRsh6a9-yPrZkJuQjBb28DjCd4YI3uML-C5JsHqUX0y8u51V2IDxDEpulWyqSGBbdGAqTf8qw8Rk5JVoMmzTmbIG6okfV0hzWCieG1k_bt2rIpToUpO8NmW7AeEO6v56kVMh099APACvFHdWeaRLMTPzbeo2TlY4K4BAk5lYWHNIbJhumfEtlzotyP46jPNhdRgT39AnX40uJTwme-8f1L3zFw4Oj_YG3iX7M8M3YHh4eiGxckDcjJ", link: "/categoria/sem-alcool" },
+                    { name: "Petiscos", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCoDOQqqoGxQNIwl5nbNndV3civTy4DKaDxt7KAts7S0TKADibkP5QJxkgFCtADMPXHWqgkkZled-Vxz8BcXokj1aC4lFbNHEdHadxnFhGEAf7YlRS6FHqQ4j9smhyLlCFNUeY5iSseCsQshVwQo9P6K_CAhCuUJ-bQiJZcuk53V4s9GcS5v3vxnLeaQ15bi9d5wIMeXFVlSJiB0V7MyXmpm4q_Wu16qkAsIomQnkA-trukFsnqncrNW9zu-8dmZ6fcNh6LdV0UfN4t", link: "/categoria/petiscos" },
+                    { name: "Outros", image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0rMU28MOIEHh_QwZTV3UgTZ0WIFfJvzWx4hOEriwqT5rByJN7tH6JF1eV-r8p9aGJI8ZbWFCWnk1xvsRmM2p8wvPFBgKu7hfqJ2EAbqznhYJfKtMEEhVyjCCsA_uYETG7tD7o0vLtdgw3oPNHT-6kyPraStzFeNG60s3Le2OmVxbNDlfmOXzX_hrwKKm7HysKjAX0T--HU3I4IdFDsw6hrLLr6nL8LOKRRv03DhE7O0JMGRQceVaSNImQxhtExBuBIIg3b8txX9wn", link: "/categoria/outros" }
+                ]
+            };
+        }
+
+        setSectionConfigForm(config);
     };
 
     const handleSaveSectionConfig = async () => {
@@ -552,28 +591,114 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                             <p className="text-sm text-neutral-500 italic">Esta seção não possui configurações de texto ou imagem.</p>
                         )}
 
-                        {editingSection && Object.entries(editingSection.config).map(([key, value]) => {
-                            if (key === 'product_ids') return null; // Don't show raw product IDs
-                            return (
-                                <div key={key}>
-                                    <Label className="capitalize">{key.replace('_', ' ')}</Label>
-                                    {key === 'keywords' ? (
-                                        <Input
-                                            value={Array.isArray(value) ? value.join(', ') : value}
-                                            onChange={e => setSectionConfigForm({ ...sectionConfigForm, [key]: e.target.value.split(',').map(s => s.trim()) })}
-                                            className="bg-neutral-900 border-neutral-800"
-                                        />
-                                    ) : (
-                                        <Input
-                                            value={sectionConfigForm[key] || ''}
-                                            onChange={e => setSectionConfigForm({ ...sectionConfigForm, [key]: e.target.value })}
-                                            className="bg-neutral-900 border-neutral-800"
-                                        />
-                                    )}
-                                    {key === 'keywords' && <p className="text-[10px] text-neutral-500">Separar por vírgula</p>}
+                        {editingSection && editingSection.slug === 'categories' ? (
+                            <div className="space-y-4">
+                                <Label className="text-yellow-500">Categorias da Grade</Label>
+                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                                    {(sectionConfigForm.categories || []).map((cat: CategoryItem, index: number) => (
+                                        <div key={index} className="bg-neutral-900 p-3 rounded-lg border border-neutral-800 space-y-3 relative">
+                                            <div className="absolute right-2 top-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="w-6 h-6 text-red-500 hover:bg-red-900/20"
+                                                    onClick={() => {
+                                                        const newCats = [...(sectionConfigForm.categories || [])];
+                                                        newCats.splice(index, 1);
+                                                        setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                    }}
+                                                >
+                                                    <X size={14} />
+                                                </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-[80px_1fr] gap-4">
+                                                <div className="w-20">
+                                                    <ImageUpload
+                                                        value={cat.image_url}
+                                                        className="w-20 h-20"
+                                                        placeholder="Img"
+                                                        onChange={async (fileOrUrl) => {
+                                                            const newCats = [...(sectionConfigForm.categories || [])];
+                                                            if (fileOrUrl instanceof File) {
+                                                                // Should ideally show loading state here
+                                                                try {
+                                                                    const url = await handleCategoryScanUpload(fileOrUrl);
+                                                                    newCats[index].image_url = url;
+                                                                    setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                                } catch (e) { alert("Erro upload"); }
+                                                            } else {
+                                                                newCats[index].image_url = fileOrUrl as string || "";
+                                                                setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div>
+                                                        <Label className="text-xs text-neutral-500">Nome</Label>
+                                                        <Input
+                                                            value={cat.name}
+                                                            onChange={e => {
+                                                                const newCats = [...(sectionConfigForm.categories || [])];
+                                                                newCats[index].name = e.target.value;
+                                                                setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                            }}
+                                                            className="h-8 bg-neutral-950 border-neutral-700"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs text-neutral-500">Link (/category/...)</Label>
+                                                        <Input
+                                                            value={cat.link}
+                                                            onChange={e => {
+                                                                const newCats = [...(sectionConfigForm.categories || [])];
+                                                                newCats[index].link = e.target.value;
+                                                                setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                                            }}
+                                                            className="h-8 bg-neutral-950 border-neutral-700 font-mono text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )
-                        })}
+                                <Button
+                                    variant="outline"
+                                    className="w-full border-dashed border-neutral-700 hover:bg-neutral-900"
+                                    onClick={() => {
+                                        const newCats = [...(sectionConfigForm.categories || []), { name: "Nova", image_url: "", link: "/categoria/nova" }];
+                                        setSectionConfigForm({ ...sectionConfigForm, categories: newCats });
+                                    }}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" /> Adicionar Categoria
+                                </Button>
+                            </div>
+                        ) : (
+                            editingSection && Object.entries(editingSection.config).map(([key, value]) => {
+                                if (key === 'product_ids' || key === 'categories') return null; // Don't show complex fields in generic loop
+                                return (
+                                    <div key={key}>
+                                        <Label className="capitalize">{key.replace('_', ' ')}</Label>
+                                        {key === 'keywords' ? (
+                                            <Input
+                                                value={Array.isArray(value) ? value.join(', ') : value}
+                                                onChange={e => setSectionConfigForm({ ...sectionConfigForm, [key]: e.target.value.split(',').map(s => s.trim()) })}
+                                                className="bg-neutral-900 border-neutral-800"
+                                            />
+                                        ) : (
+                                            <Input
+                                                value={sectionConfigForm[key] || ''}
+                                                onChange={e => setSectionConfigForm({ ...sectionConfigForm, [key]: e.target.value })}
+                                                className="bg-neutral-900 border-neutral-800"
+                                            />
+                                        )}
+                                        {key === 'keywords' && <p className="text-[10px] text-neutral-500">Separar por vírgula</p>}
+                                    </div>
+                                )
+                            })
+                        )}
 
                         {/* Manual Product Selection Button for relevant sections */}
                         {editingSection && ['recommended', 'beers'].includes(editingSection.slug) && (
@@ -741,5 +866,4 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
         </div>
     );
 }
-// Add Search to imports
-import { Check, Grid, Settings, ToggleLeft, Search } from "lucide-react";
+

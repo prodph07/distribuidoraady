@@ -33,9 +33,11 @@ export function ProductDrawer({ isOpen, onClose, product, onAddToCart }: Product
     if (!mounted) return null;
     if (!product) return null;
 
-    const handleIncrement = () => setQuantity(prev => prev + 1);
+    const maxStock = product.calculated_stock ?? product.stock_quantity;
+
+    const handleIncrement = () => setQuantity(prev => (prev < maxStock ? prev + 1 : prev));
     const handleDecrement = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
-    const handleAddPack = (amount: number) => setQuantity(prev => prev + amount);
+    const handleAddPack = (amount: number) => setQuantity(prev => (prev + amount <= maxStock ? prev + amount : maxStock));
 
     const totalPrice = product.price * quantity;
 

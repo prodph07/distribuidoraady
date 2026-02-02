@@ -9,7 +9,7 @@ import { Product, Order, Category, Subcategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle, Search, CreditCard, Wallet } from "lucide-react";
+import { Database, TrendingUp, ShoppingBag, DollarSign, Bell, BellOff, AlignJustify, Grid, Settings, Plus, Trash2, Minus, Pencil, Truck, PieChart, MapPin, AlertTriangle, Search, CreditCard, Wallet, Package } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { ProductFormDialog } from "@/components/admin/ProductFormDialog";
 import { HomeConfigTab } from "@/components/admin/HomeConfigTab";
 import { StockManager } from "@/components/admin/StockManager";
+import { ComboManager } from "@/components/admin/ComboManager";
 import { CategoryManagerDialog } from "@/components/admin/CategoryManagerDialog";
 import { useRouter } from "next/navigation";
 
@@ -50,7 +51,7 @@ export default function AdminDashboard() {
     const [realtimeStatus, setRealtimeStatus] = useState<string>("Conectando...");
     const [audioLocked, setAudioLocked] = useState(true); // Default to true to force initial interaction
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-    const [mainSection, setMainSection] = useState<'orders' | 'stock' | 'couriers' | 'analytics' | 'settings' | 'home-config'>('orders');
+    const [mainSection, setMainSection] = useState<'orders' | 'stock' | 'combos' | 'couriers' | 'analytics' | 'settings' | 'home-config'>('orders');
     const [couriers, setCouriers] = useState<any[]>([]);
     const [showStockAlert, setShowStockAlert] = useState(true);
 
@@ -378,6 +379,18 @@ export default function AdminDashboard() {
                                 </div>
                             </button>
                             <button
+                                onClick={() => setMainSection('combos')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'combos'
+                                    ? 'bg-neutral-700 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Package size={16} />
+                                    <span>Combos</span>
+                                </div>
+                            </button>
+                            <button
                                 onClick={() => setMainSection('couriers')}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${mainSection === 'couriers'
                                     ? 'bg-neutral-700 text-white shadow-sm'
@@ -570,6 +583,12 @@ export default function AdminDashboard() {
                             subcategories={subcategories}
                             onSave={handleSaveProduct}
                         />
+                    </div>
+                )}
+
+                {mainSection === 'combos' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <ComboManager products={products} onRefresh={fetchProducts} />
                     </div>
                 )}
 
@@ -806,7 +825,8 @@ export default function AdminDashboard() {
                         </div>
                     )
                 }
-            </main >
-        </div >
+            </main>
+        </div>
     );
 }
+

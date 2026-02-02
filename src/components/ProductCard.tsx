@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { ProductExchangeDialog } from "./ProductExchangeDialog";
 import { ProductDrawer } from "./ProductDrawer";
+import { PostAddCartDialog } from "./PostAddCartDialog";
 import { ImageIcon } from "lucide-react";
 
 interface ProductCardProps {
@@ -14,9 +16,11 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+    const router = useRouter();
     const { addToCart } = useCart();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isExchangeDialogOpen, setIsExchangeDialogOpen] = useState(false);
+    const [isPostAddDialogOpen, setIsPostAddDialogOpen] = useState(false);
     const [pendingQuantity, setPendingQuantity] = useState(1);
 
     const handleAddClick = () => {
@@ -34,11 +38,15 @@ export function ProductCard({ product }: ProductCardProps) {
             }, 300);
         } else {
             addToCart(product, quantity, false);
+            setTimeout(() => {
+                setIsPostAddDialogOpen(true);
+            }, 300);
         }
     };
 
     const confirmExchange = (exchangeOption: "exchange" | "buy") => {
         addToCart(product, pendingQuantity, exchangeOption === "exchange");
+        setIsPostAddDialogOpen(true);
     };
 
     return (
@@ -62,6 +70,11 @@ export function ProductCard({ product }: ProductCardProps) {
                         </div>
                     )}
 
+                    {product.is_combo && (
+                        <div className="absolute top-3 left-3 bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm z-10">
+                            Combo
+                        </div>
+                    )}
                     {product.is_returnable && (
                         <div className="absolute top-3 right-3 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-red-200">
                             Retornável
@@ -107,6 +120,16 @@ export function ProductCard({ product }: ProductCardProps) {
                 onOpenChange={setIsExchangeDialogOpen}
                 product={product}
                 onConfirm={confirmExchange}
+            />
+
+            <PostAddCartDialog
+                open={isPostAddDialogOpen}
+                onOpenChange={setIsPostAddDialogOpen}
+                onContinue={() => setIsPostAddDialogOpen(false)}
+                onReview={() => {
+                    setIsPostAddDialogOpen(false);
+                    router.push('/checkout');
+                }}
             />
         </>
     );

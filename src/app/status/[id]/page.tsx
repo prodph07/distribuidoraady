@@ -24,6 +24,17 @@ interface Order {
     total_amount: number;
     delivery_fee?: number;
     service_fee?: number;
+    order_items?: {
+        quantity: number;
+        price_snapshot: number;
+        product?: {
+            name: string;
+            image_url?: string;
+        } | {
+            name: string;
+            image_url?: string;
+        }[];
+    }[];
 }
 
 export default function OrderStatusPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +49,17 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
         const fetchOrder = async () => {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*')
+                .select(`
+                    *,
+                    order_items (
+                        quantity,
+                        price_snapshot,
+                        product:products (
+                            name,
+                            image_url
+                        )
+                    )
+                `)
                 .eq('id', id)
                 .single();
 
@@ -185,11 +206,45 @@ export default function OrderStatusPage({ params }: { params: Promise<{ id: stri
                         </div>
                     )}
 
+                    {/* Order Items List */}
+                    <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800 space-y-4">
+                        <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                            <span className="w-1 h-5 bg-primary rounded-full"></span>
+                            Itens do Pedido
+                        </h3>
+                        <div className="space-y-4">
+                            {order.order_items?.map((item, index) => {
+                                const products = Array.isArray(item.product) ? item.product : [item.product];
+                                const product = products[0];
+                                const totalItemPrice = (item.price_snapshot || 0) * item.quantity;
+
+                                return (
+                                    <div key={index} className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center overflow-hidden">
+                                            {product?.image_url ? (
+                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Package className="w-6 h-6 text-neutral-600" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-white font-bold">{product?.name || 'Produto indisponível'}</p>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <p className="text-sm text-neutral-400">Qtd: {item.quantity} x R$ {item.price_snapshot?.toFixed(2).replace('.', ',')}</p>
+                                                <p className="text-sm font-bold text-primary">R$ {totalItemPrice.toFixed(2).replace('.', ',')}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Order Financial Summary */}
                     <div className="bg-neutral-900 rounded-3xl p-6 border border-neutral-800 space-y-3">
                         <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                             <span className="w-1 h-5 bg-primary rounded-full"></span>
-                            Resumo do Pedido
+                            Resumo Financeiro
                         </h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between text-neutral-400">

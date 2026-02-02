@@ -37,7 +37,7 @@ export default async function Home() {
     .select(`
       *,
       collection_items(
-        product:products(*)
+        product:products(*, calculated_stock)
       )
     `)
     .eq('active', true)
@@ -46,7 +46,7 @@ export default async function Home() {
   // Fetch all products (still needed for existing logic or fallback)
   const { data: products } = await supabase
     .from('products')
-    .select('*')
+    .select('*, calculated_stock')
     .eq('in_stock', true)
     .order('name');
 
@@ -107,8 +107,12 @@ export default async function Home() {
             </div>
           )}
 
-          {/* Categories Grid */}
-          {sectionsMap['categories']?.active && <CategoriesGrid title={sectionsMap['categories'].config?.title} />}
+          {sectionsMap['categories']?.active && (
+            <CategoriesGrid
+              title={sectionsMap['categories'].config?.title}
+              categories={sectionsMap['categories'].config?.categories}
+            />
+          )}
 
           {/* Featured Products (Horizontal Scroll) - Now Dynamic */}
           {featuredCollections && featuredCollections.length > 0 ? (

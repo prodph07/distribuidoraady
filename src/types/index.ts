@@ -12,6 +12,8 @@ export interface Product {
     subcategory?: string; // e.g. 'Pilsen', 'Vodka'
     cost_price?: number;
     bottle_cost?: number;
+    is_combo?: boolean;
+    calculated_stock?: number;
 }
 
 export interface Category {

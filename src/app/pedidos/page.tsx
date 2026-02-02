@@ -15,6 +15,10 @@ interface Order {
     status: string;
     total_amount: number;
     payment_method?: string;
+    order_items?: {
+        quantity: number;
+        product?: { name: string } | { name: string }[];
+    }[];
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -47,7 +51,18 @@ export default function PedidosPage() {
 
             const { data, error } = await supabase
                 .from('orders')
-                .select('id, created_at, status, total_amount')
+                .select(`
+                    id, 
+                    created_at, 
+                    status, 
+                    total_amount,
+                    order_items (
+                        quantity,
+                        product:products (
+                            name
+                        )
+                    )
+                `)
                 .eq('customer_phone', phone)
                 .order('created_at', { ascending: false });
 
@@ -102,6 +117,14 @@ export default function PedidosPage() {
                             const statusConfig = STATUS_MAP[order.status] || STATUS_MAP['pending_payment'];
                             const StatusIcon = statusConfig.icon;
 
+                            // Summarize items
+                            const itemsSummary = order.order_items?.map(item => {
+                                const productName = Array.isArray(item.product)
+                                    ? item.product[0]?.name
+                                    : item.product?.name;
+                                return `${item.quantity}x ${productName || 'Item'}`;
+                            }).join(', ');
+
                             return (
                                 <div key={order.id} className="bg-neutral-900 rounded-2xl p-4 border border-neutral-800 transition-all hover:border-neutral-700">
                                     <div className="flex justify-between items-start mb-4">
@@ -115,6 +138,11 @@ export default function PedidosPage() {
                                             <StatusIcon className="w-3 h-3" />
                                             {statusConfig.label}
                                         </Badge>
+                                    </div>
+
+                                    {/* Items Summary */}
+                                    <div className="text-sm text-neutral-300 mb-4 line-clamp-2">
+                                        {itemsSummary}
                                     </div>
 
                                     <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
