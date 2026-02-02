@@ -64,6 +64,7 @@ export default function AdminDashboard() {
 
     // STates for Fees
     const [deliveryFee, setDeliveryFee] = useState("5.00");
+    const [minOrderValue, setMinOrderValue] = useState("0.00");
     const [settingsId, setSettingsId] = useState<number | null>(null);
 
     // KPI Calculations moved to AdminKPIs
@@ -131,6 +132,7 @@ export default function AdminDashboard() {
             const { data } = await supabase.from('settings').select('*').single();
             if (data) {
                 setDeliveryFee(data.delivery_fee.toString());
+                setMinOrderValue(data.min_order_value?.toString() || "0.00");
                 setSettingsId(data.id);
             }
         };
@@ -192,10 +194,19 @@ export default function AdminDashboard() {
 
     const updateOrderStatus = async (id: string, newStatus: string) => {
         // Optimistic Update
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+        if (newStatus === 'cancelled') {
+            setOrders(prev => prev.filter(o => o.id !== id)); // Remove from view immediately
+        } else {
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+        }
 
         try {
-            const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id);
+            const updates: any = { status: newStatus };
+            if (newStatus === 'cancelled') {
+                updates.archived = true;
+            }
+
+            const { error } = await supabase.from('orders').update(updates).eq('id', id);
             if (error) throw error;
             // Success audio (optional)
         } catch (error) {
@@ -621,6 +632,27 @@ export default function AdminDashboard() {
                                                             onBlur={async () => {
                                                                 if (!settingsId) return;
                                                                 await supabase.from('settings').update({ delivery_fee: parseFloat(deliveryFee) }).eq('id', settingsId);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-neutral-900 border border-neutral-700 p-4 rounded-lg flex items-center justify-between">
+                                                    <div>
+                                                        <Label className="text-neutral-300 font-bold mb-1 block">Pedido Mínimo</Label>
+                                                        <p className="text-xs text-neutral-500">Valor mínimo para finalizar compra</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-neutral-500 font-bold">R$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.50"
+                                                            className="bg-neutral-950 border border-neutral-700 text-white font-bold p-2 rounded w-24 text-right"
+                                                            value={minOrderValue}
+                                                            onChange={(e) => setMinOrderValue(e.target.value)}
+                                                            onBlur={async () => {
+                                                                if (!settingsId) return;
+                                                                await supabase.from('settings').update({ min_order_value: parseFloat(minOrderValue) }).eq('id', settingsId);
                                                             }}
                                                         />
                                                     </div>

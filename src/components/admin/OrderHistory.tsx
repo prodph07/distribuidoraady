@@ -16,13 +16,14 @@ import {
 } from "@/components/ui/table";
 import { format, subDays, isSameDay, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Filter, Search, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Filter, Search, Trash2, CheckCircle2, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function OrderHistory() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState<'today' | 'yesterday' | 'last7' | 'all'>('today');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'delivered' | 'cancelled'>('all');
     const [startDate, setStartDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
     const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
@@ -39,6 +40,11 @@ export function OrderHistory() {
             `)
             .eq('archived', true)
             .order('created_at', { ascending: false });
+
+        // Status Filter
+        if (statusFilter !== 'all') {
+            query = query.eq('status', statusFilter);
+        }
 
         // Date Filters
         const start = startOfDay(parseISO(startDate)).toISOString();
@@ -77,7 +83,7 @@ export function OrderHistory() {
 
     useEffect(() => {
         fetchHistory();
-    }, [startDate, endDate]);
+    }, [startDate, endDate, statusFilter]);
 
     // Metrics
     const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0);
@@ -92,11 +98,26 @@ export function OrderHistory() {
                     <p className="text-gray-400">Consulte pedidos arquivados e métricas.</p>
                 </div>
 
-                <div className="flex bg-neutral-800 p-1 rounded-lg border border-neutral-700">
-                    <button onClick={() => setDateRange('today')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'today' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Hoje</button>
-                    <button onClick={() => setDateRange('yesterday')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'yesterday' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Ontem</button>
-                    <button onClick={() => setDateRange('last7')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'last7' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>7 Dias</button>
-                    <button onClick={() => setDateRange('all')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'all' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Todos</button>
+                <div className="flex gap-4 items-center">
+                    {/* Status Filter */}
+                    <div className="flex bg-neutral-800 p-1 rounded-lg border border-neutral-700 h-9">
+                        <button onClick={() => setStatusFilter('all')} className={`px-3 text-xs font-bold rounded flex items-center gap-1 transition-all ${statusFilter === 'all' ? 'bg-neutral-600 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                            Todos
+                        </button>
+                        <button onClick={() => setStatusFilter('delivered')} className={`px-3 text-xs font-bold rounded flex items-center gap-1 transition-all ${statusFilter === 'delivered' ? 'bg-green-600/20 text-green-400' : 'text-gray-500 hover:text-green-400/70'}`}>
+                            <CheckCircle2 size={12} /> Entregues
+                        </button>
+                        <button onClick={() => setStatusFilter('cancelled')} className={`px-3 text-xs font-bold rounded flex items-center gap-1 transition-all ${statusFilter === 'cancelled' ? 'bg-red-600/20 text-red-500' : 'text-gray-500 hover:text-red-500/70'}`}>
+                            <Ban size={12} /> Cancelados
+                        </button>
+                    </div>
+
+                    <div className="flex bg-neutral-800 p-1 rounded-lg border border-neutral-700">
+                        <button onClick={() => setDateRange('today')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'today' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Hoje</button>
+                        <button onClick={() => setDateRange('yesterday')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'yesterday' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Ontem</button>
+                        <button onClick={() => setDateRange('last7')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'last7' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>7 Dias</button>
+                        <button onClick={() => setDateRange('all')} className={`px-4 py-2 text-sm rounded-md transition-all ${dateRange === 'all' ? 'bg-neutral-600 text-white' : 'text-gray-400 hover:text-white'}`}>Todos</button>
+                    </div>
                 </div>
             </div>
 

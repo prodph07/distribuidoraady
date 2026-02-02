@@ -35,6 +35,7 @@ export default function CheckoutPage() {
 
     // Fee State
     const [deliveryFee, setDeliveryFee] = useState(0);
+    const [minOrderValue, setMinOrderValue] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [servicePercent, setServicePercent] = useState(0); // Only for display if tiers
 
@@ -60,6 +61,7 @@ export default function CheckoutPage() {
                 setTiers(data.commission_tiers || []);
                 setCommissionType(data.commission_type || "tiers");
                 setFixedCommission(Number(data.commission_fixed_value || 0));
+                setMinOrderValue(Number(data.min_order_value || 0));
             }
         };
         fetchSettings();
@@ -465,6 +467,18 @@ export default function CheckoutPage() {
                                     <span className="text-white font-bold">Total a pagar</span>
                                     <span className="text-2xl font-black text-primary">R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                                 </div>
+
+                                {/* Minimum Order Warning */}
+                                {cartTotal < minOrderValue && (
+                                    <div className="mt-4 p-3 bg-red-900/20 border border-red-900/50 rounded-xl text-red-500 text-sm font-bold flex items-center gap-2 animate-pulse">
+                                        <AlertTriangle className="w-5 h-5" />
+                                        <span>
+                                            Pedido mínimo é R$ {minOrderValue.toFixed(2).replace('.', ',')}.
+                                            <br />
+                                            Faltam R$ {(minOrderValue - cartTotal).toFixed(2).replace('.', ',')}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>
@@ -503,7 +517,7 @@ export default function CheckoutPage() {
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-900 border-t border-neutral-800 shadow-[0_-4px_10px_rgba(0,0,0,0.2)] z-10 md:relative md:bg-transparent md:border-t-0 md:shadow-none md:p-0">
                         <Button
                             type="submit"
-                            disabled={(hasExchangeItems && !commitment) || loading}
+                            disabled={(hasExchangeItems && !commitment) || loading || cartTotal < minOrderValue}
                             className="w-full h-16 rounded-2xl font-black text-xl bg-primary text-black hover:bg-yellow-400 shadow-xl shadow-yellow-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (

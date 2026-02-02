@@ -23,7 +23,11 @@ export function ProductCard({ product }: ProductCardProps) {
     const [isPostAddDialogOpen, setIsPostAddDialogOpen] = useState(false);
     const [pendingQuantity, setPendingQuantity] = useState(1);
 
+    const maxStock = product.calculated_stock ?? product.stock_quantity;
+    const isOutOfStock = maxStock <= 0;
+
     const handleAddClick = () => {
+        if (isOutOfStock) return;
         setIsDrawerOpen(true);
     };
 
@@ -51,9 +55,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
     return (
         <>
-            <div className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border flex flex-col h-full group transition-all hover:shadow-md hover:-translate-y-1">
+            <div className={`bg-card rounded-3xl overflow-hidden shadow-sm border border-border flex flex-col h-full group transition-all ${!isOutOfStock ? 'hover:shadow-md hover:-translate-y-1' : ''}`}>
                 <div
-                    className="relative aspect-square bg-white p-4 overflow-hidden flex items-center justify-center cursor-pointer"
+                    className={`relative aspect-square bg-white p-4 overflow-hidden flex items-center justify-center ${!isOutOfStock ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
                     onClick={handleAddClick}
                 >
                     {product.image_url ? (
@@ -61,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
                             src={product.image_url}
                             alt={product.name}
                             fill
-                            className="object-contain p-2 transition-transform group-hover:scale-110"
+                            className={`object-contain p-2 transition-transform ${!isOutOfStock ? 'group-hover:scale-110' : 'grayscale'}`}
                             sizes="(max-width: 768px) 50vw, 33vw"
                         />
                     ) : (
@@ -99,10 +103,11 @@ export function ProductCard({ product }: ProductCardProps) {
                         </div>
                         <Button
                             onClick={handleAddClick}
-                            className="rounded-full w-24 h-10 font-bold shadow-sm hover:scale-105 transition-transform"
-                            variant="default"
+                            disabled={isOutOfStock}
+                            className={`rounded-full h-10 font-bold shadow-sm transition-transform ${isOutOfStock ? 'w-28 opacity-80' : 'w-24 hover:scale-105'}`}
+                            variant={isOutOfStock ? "secondary" : "default"}
                         >
-                            ADICIONAR
+                            {isOutOfStock ? "ESGOTADO" : "ADICIONAR"}
                         </Button>
                     </div>
                 </div>

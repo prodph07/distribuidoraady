@@ -23,9 +23,9 @@ export function PixPaymentModal({ isOpen, onClose, orderId, totalAmount, onSucce
 
     // Configuration for PIX Key
     const pixKeyConfig = {
-        key: "17061422777", // CPF provided by user
-        name: "PEDRO HENRIQUE CAVALCANTE DOS SANTOS",
-        city: "SAO JOAO DE MERITI"
+        key: "+5598984991078",
+        name: "Admilson de Ribamar Coelho Sarmento Filho",
+        city: "VITORIA DO MEARIM" // City name often normalized without state for Payload, but usually fine.
     };
 
     useEffect(() => {

@@ -150,16 +150,22 @@ export function ProductDrawer({ isOpen, onClose, product, onAddToCart }: Product
                             {/* Add Button */}
                             <Button
                                 onClick={() => {
-                                    onAddToCart(quantity);
-                                    onClose();
+                                    if (maxStock > 0) {
+                                        onAddToCart(quantity);
+                                        onClose();
+                                    }
                                 }}
+                                disabled={maxStock <= 0}
                                 className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20 mt-2"
+                                variant={maxStock <= 0 ? "secondary" : "default"}
                             >
                                 <div className="flex items-center justify-between w-full px-2">
-                                    <span>Adicionar ao Carrinho</span>
-                                    <span className="bg-black/20 px-3 py-1 rounded-lg text-base">
-                                        R$ {totalPrice.toFixed(2).replace('.', ',')}
-                                    </span>
+                                    <span>{maxStock <= 0 ? "Produto Esgotado" : "Adicionar ao Carrinho"}</span>
+                                    {maxStock > 0 && (
+                                        <span className="bg-black/20 px-3 py-1 rounded-lg text-base">
+                                            R$ {totalPrice.toFixed(2).replace('.', ',')}
+                                        </span>
+                                    )}
                                 </div>
                             </Button>
                         </div>
