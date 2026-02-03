@@ -125,17 +125,17 @@ export function OrderHistory() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-neutral-800 border-neutral-700">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Faturamento no Período</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Faturamento no Período</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-400">
+                        <div className="text-2xl font-bold text-white">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalRevenue)}
                         </div>
                     </CardContent>
                 </Card>
                 <Card className="bg-neutral-800 border-neutral-700">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Pedidos Arquivados</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Pedidos Arquivados</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">{totalOrders}</div>
@@ -143,10 +143,10 @@ export function OrderHistory() {
                 </Card>
                 <Card className="bg-neutral-800 border-neutral-700">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Ticket Médio</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Ticket Médio</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-400">
+                        <div className="text-2xl font-bold text-white">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(avgTicket)}
                         </div>
                     </CardContent>
@@ -185,8 +185,13 @@ export function OrderHistory() {
                                         <div className="text-xs text-gray-500">{order.customer_phone}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-900/50 capitalize">
-                                            {order.status === 'delivered' ? 'Concluído' : order.status}
+                                        <Badge variant="outline" className={`capitalize ${order.status === 'delivered'
+                                                ? 'bg-green-900/20 text-green-400 border-green-900/50'
+                                                : order.status === 'cancelled'
+                                                    ? 'bg-red-900/20 text-red-500 border-red-900/50'
+                                                    : 'text-gray-400 border-gray-700'
+                                            }`}>
+                                            {order.status === 'delivered' ? 'Concluído' : order.status === 'cancelled' ? 'Cancelado' : order.status}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-gray-400 text-sm max-w-xs truncate">

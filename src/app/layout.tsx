@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { AgeGate } from "@/components/AgeGate";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -11,7 +12,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Distribuidora Premium",
+  title: "Distribuidora do Ady",
   description: "Sua bebida gelada, rápida e fácil.",
 };
 
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} antialiased bg-background text-foreground`}>
         <Providers>
           <AgeGate />
+          <InstallPrompt />
           {children}
         </Providers>
       </body>

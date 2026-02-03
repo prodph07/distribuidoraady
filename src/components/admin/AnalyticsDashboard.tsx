@@ -234,7 +234,7 @@ export function AnalyticsDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-neutral-800 border-neutral-700">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Faturamento Bruto</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Faturamento Bruto</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">
@@ -244,23 +244,23 @@ export function AnalyticsDashboard() {
                 </Card>
                 <Card className="bg-neutral-800 border-neutral-700">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Custo Total (CMV)</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Custo Total (CMV)</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-400">
+                        <div className="text-2xl font-bold text-white">
                             - {formatCurrency(totalCost)}
                         </div>
                     </CardContent>
                 </Card>
                 <Card className="bg-neutral-800 border-neutral-700 border-l-4 border-l-green-500">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400">Lucro Líquido</CardTitle>
+                        <CardTitle className="text-sm font-medium text-white">Lucro Líquido</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-400">
+                        <div className="text-2xl font-bold text-white">
                             {formatCurrency(totalNetProfit)}
                         </div>
-                        <p className="text-xs text-neutral-500 mt-1">Margem: {margin.toFixed(1)}%</p>
+                        <p className="text-xs text-white mt-1">Margem: {margin.toFixed(1)}%</p>
                     </CardContent>
                 </Card>
             </div>

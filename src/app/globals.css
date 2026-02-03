@@ -45,73 +45,36 @@
 }
 
 :root {
-  /* Zé Style: Bright Yellow, White Background, Black Text */
-  --background: #f4f4f5;
-  /* Light Gray Background for app feel */
-  --foreground: #18181b;
-  /* Zinc 900 */
+  /* Forced Dark Mode (Zinc 950 base) */
+  --background: #09090b;
+  --foreground: #fafafa;
 
-  --card: #ffffff;
-  --card-foreground: #18181b;
+  --card: #18181b;
+  --card-foreground: #fafafa;
 
-  --popover: #ffffff;
-  --popover-foreground: #18181b;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
 
   --primary: #ffc500;
-  /* Zé Yellow (approx) */
   --primary-foreground: #000000;
-  /* Black text on Yellow */
 
-  --secondary: #ffffff;
-  --secondary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
 
-  --muted: #e4e4e7;
-  --muted-foreground: #71717a;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
 
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
 
-  --destructive: #ef4444;
+  --destructive: #991b1b;
   --destructive-foreground: #fafafa;
 
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --border: #27272a;
+  --input: #27272a;
   --ring: #ffc500;
 
   --radius: 1rem;
-  /* More rounded (16px) */
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #fafafa;
-
-    --card: #18181b;
-    --card-foreground: #fafafa;
-
-    --popover: #18181b;
-    --popover-foreground: #fafafa;
-
-    --primary: #ffc500;
-    --primary-foreground: #000000;
-
-    --secondary: #27272a;
-    --secondary-foreground: #fafafa;
-
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-
-    --accent: #27272a;
-    --accent-foreground: #fafafa;
-
-    --destructive: #991b1b;
-    --destructive-foreground: #fafafa;
-
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #ffc500;
-  }
 }
 
 body {
