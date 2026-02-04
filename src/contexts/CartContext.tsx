@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { CartItem, Product } from "@/types";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface CartContextType {
     items: CartItem[];
@@ -16,6 +17,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
+
+    const { trackEvent } = useAnalytics();
 
     // Load from local storage on mount (optional)
     useEffect(() => {
@@ -34,6 +37,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, [items]);
 
     const addToCart = (product: Product, quantity: number, hasExchange: boolean) => {
+        trackEvent('add_to_cart', {
+            product_id: product.id,
+            name: product.name,
+            quantity: quantity,
+            price: product.price,
+            has_exchange: hasExchange
+        });
+
         setItems((prev) => {
             const existing = prev.find(
                 (i) => i.id === product.id && i.has_exchange === hasExchange

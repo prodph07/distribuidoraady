@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { AgeGate } from "@/components/AgeGate";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { DeliveryDisclaimer } from "@/components/DeliveryDisclaimer";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -26,6 +28,9 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${outfit.variable} antialiased bg-background text-foreground`}>
         <Providers>
+          <Suspense fallback={null}>
+            <AnalyticsProvider />
+          </Suspense>
           <AgeGate />
           <DeliveryDisclaimer />
           <InstallPrompt />

@@ -15,11 +15,23 @@ import { supabase } from "@/lib/supabase";
 import { PixPaymentModal } from "@/components/PixPaymentModal";
 import { Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 export default function CheckoutPage() {
     const { items, removeFromCart, cartTotal, clearCart, addToCart } = useCart();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+
+    const { trackEvent } = useAnalytics();
+
+    useEffect(() => {
+        if (items.length > 0) {
+            trackEvent('checkout_start', {
+                cart_value: cartTotal,
+                item_count: items.length
+            });
+        }
+    }, []); // Run once on mount
 
     // Single Form State
     const [formData, setFormData] = useState({
@@ -152,6 +164,12 @@ export default function CheckoutPage() {
             localStorage.setItem("customer_data", JSON.stringify(formData)); // Remember user for next time
 
             // 4. Handle Payment Flow
+            trackEvent('order_complete', {
+                order_id: order.id,
+                total_amount: finalTotal,
+                payment_method: paymentMethod
+            });
+
             if (paymentMethod === 'online') {
                 // Open Pix Mock Modal
                 setCreatedOrder(order);

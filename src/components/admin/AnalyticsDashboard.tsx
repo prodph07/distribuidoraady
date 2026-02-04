@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Order } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
     BarChart,
     Bar,
@@ -14,13 +13,10 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
-    Cell
 } from 'recharts';
 import { format, subDays, parseISO, isSameDay, startOfDay, endOfDay, differenceInDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Filter, TrendingUp, DollarSign, Award, ChevronDown } from "lucide-react";
+import { TrendingUp, Award, Users, ShoppingCart, MousePointerClick, ArrowRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 type DateRange = {
     from: Date | undefined;
@@ -29,6 +25,7 @@ type DateRange = {
 
 export function AnalyticsDashboard() {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState<'7' | '15' | '30' | 'custom'>('7');
     const [dateRange, setDateRange] = useState<DateRange>({
@@ -44,8 +41,8 @@ export function AnalyticsDashboard() {
         const from = startOfDay(dateRange.from).toISOString();
         const to = endOfDay(dateRange.to || dateRange.from || new Date()).toISOString();
 
-        // Fetch all delivered orders (active or archived)
-        const { data, error } = await supabase
+        // 1. Fetch Orders (Financials)
+        const { data: ordersData } = await supabase
             .from('orders')
             .select(`
                 *,
@@ -61,12 +58,16 @@ export function AnalyticsDashboard() {
             .lte('created_at', to)
             .order('created_at', { ascending: true });
 
-        if (error) {
-            console.error("Error fetching analytics:", error);
-        } else {
-            console.log("Analytics Data Fetched:", data?.length);
-            setOrders(data as any || []);
-        }
+        // 2. Fetch Analytics Events (Traffic/Conversion)
+        const { data: eventsData } = await supabase
+            .from('analytics_events')
+            .select('*')
+            .gte('created_at', from)
+            .lte('created_at', to);
+
+        if (ordersData) setOrders(ordersData as any);
+        if (eventsData) setEvents(eventsData);
+
         setLoading(false);
     };
 
@@ -88,9 +89,7 @@ export function AnalyticsDashboard() {
         }
     }, [dateRange]);
 
-    // --- Data Processing ---
-
-    // 0. KPI Metrics
+    // --- Data Processing (Financials) ---
     const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0);
     const totalCost = orders.reduce((acc, o) => {
         const orderCost = o.order_items?.reduce((itemAcc, item: any) => {
@@ -102,8 +101,29 @@ export function AnalyticsDashboard() {
     const totalNetProfit = totalRevenue - totalCost;
     const margin = totalRevenue > 0 ? (totalNetProfit / totalRevenue) * 100 : 0;
 
+    // --- Data Processing (Funnel) ---
 
-    // 1. Daily Sales & Profit
+    // Unique Sessions (Visits)
+    const uniqueSessions = new Set(events.map(e => e.session_id)).size;
+
+    // Sessions with at least one 'add_to_cart'
+    const sessionsWithCart = new Set(events.filter(e => e.event_type === 'add_to_cart').map(e => e.session_id));
+
+    // Sessions with 'order_complete' OR linked to an order (proxy via analytics events logic)
+    // Ideally we look for 'order_complete' event.
+    const sessionsWithOrder = new Set(events.filter(e => e.event_type === 'order_complete').map(e => e.session_id));
+
+    // Abandoned Carts: Sessions that added to cart but didn't complete order
+    const abandonedCartsCount = [...sessionsWithCart].filter(sid => !sessionsWithOrder.has(sid)).length;
+
+    // Conversion Rate: Orders / Unique Visits
+    const conversionRate = uniqueSessions > 0 ? (sessionsWithOrder.size / uniqueSessions) * 100 : 0;
+
+    // Cart Abandonment Rate
+    const cartAbandonmentRate = sessionsWithCart.size > 0 ? (abandonedCartsCount / sessionsWithCart.size) * 100 : 0;
+
+
+    // --- Charts Logic ---
     const daysDiff = dateRange?.from && dateRange?.to ? differenceInDays(dateRange.to, dateRange.from) + 1 : parseInt(period);
     const chartDays = Math.max(daysDiff || 1, 1);
 
@@ -123,7 +143,6 @@ export function AnalyticsDashboard() {
 
         if (dayStat) {
             const revenue = Number(order.total_amount) || 0;
-
             // Calculate Cost for this order
             const cost = order.order_items?.reduce((acc, item: any) => {
                 const productCost = item.products?.cost_price || 0;
@@ -135,9 +154,8 @@ export function AnalyticsDashboard() {
         }
     });
 
-    // 2. Top Products (Global)
+    // Top Products
     const productSales: Record<number, { name: string, quantity: number, category: string }> = {};
-
     orders.forEach(order => {
         order.order_items?.forEach((item: any) => {
             if (!item.products) return;
@@ -152,47 +170,27 @@ export function AnalyticsDashboard() {
             productSales[pid].quantity += item.quantity;
         });
     });
-
     const sortedProducts = Object.values(productSales).sort((a, b) => b.quantity - a.quantity);
     const top10Global = sortedProducts.slice(0, 10);
 
-    // 3. Top Products per Category (Grouped)
-    const topByCategory: Record<string, typeof sortedProducts> = {};
-
-    sortedProducts.forEach(p => {
-        const cat = p.category || 'Outros';
-        if (!topByCategory[cat]) topByCategory[cat] = [];
-        if (topByCategory[cat].length < 5) {
-            topByCategory[cat].push(p);
-        }
-    });
-
-    // Formatting currency
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header / Filter */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-neutral-800 p-4 rounded-xl border border-neutral-700">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-neutral-900/50 p-6 rounded-3xl border border-neutral-800 backdrop-blur-sm">
                 <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                        <TrendingUp className="text-primary" /> Painel de Performance
+                    <h2 className="text-2xl font-black flex items-center gap-2 text-white tracking-tight">
+                        <TrendingUp className="text-primary w-6 h-6" /> Analytics e Performance
                     </h2>
-                    <p className="text-sm text-neutral-400">
-                        {dateRange?.from ? (
-                            dateRange.to ? (
-                                <>Período: {format(dateRange.from, 'dd/MM/yyyy')} - {format(dateRange.to, 'dd/MM/yyyy')}</>
-                            ) : (
-                                <>Período: {format(dateRange.from, 'dd/MM/yyyy')}</>
-                            )
-                        ) : "Selecione um período"}
+                    <p className="text-neutral-400 mt-1">
+                        Acompanhe o tráfego, conversão e faturamento da sua loja.
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto">
-                    {/* Preset Selector */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
                     <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-                        <SelectTrigger className="w-full sm:w-[180px] bg-neutral-900 border-neutral-600 text-white">
+                        <SelectTrigger className="w-full sm:w-[200px] h-11 bg-neutral-950 border-neutral-800 text-neutral-200 rounded-xl font-medium">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
@@ -203,9 +201,8 @@ export function AnalyticsDashboard() {
                         </SelectContent>
                     </Select>
 
-                    {/* Native Date Picker Inputs */}
                     {period === 'custom' && (
-                        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-600 rounded-md px-3 py-2">
+                        <div className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 h-11">
                             <input
                                 type="date"
                                 className="bg-transparent text-white text-sm focus:outline-none [&::-webkit-calendar-picker-indicator]:invert"
@@ -215,7 +212,7 @@ export function AnalyticsDashboard() {
                                     setDateRange(prev => ({ ...prev, from: date }));
                                 }}
                             />
-                            <span className="text-neutral-500">-</span>
+                            <span className="text-neutral-600">→</span>
                             <input
                                 type="date"
                                 className="bg-transparent text-white text-sm focus:outline-none [&::-webkit-calendar-picker-indicator]:invert"
@@ -230,113 +227,170 @@ export function AnalyticsDashboard() {
                 </div>
             </div>
 
-            {/* Metrics Cards (Restored) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-neutral-800 border-neutral-700">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-white">Faturamento Bruto</CardTitle>
+            {/* FUNNEL METRICS (NEW) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-neutral-900 border-neutral-800 shadow-lg hover:border-neutral-700 transition-colors group">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-neutral-400">Visitas Totais</CardTitle>
+                        <Users className="h-4 w-4 text-purple-500 group-hover:scale-110 transition-transform" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-black text-white">{uniqueSessions}</div>
+                        <p className="text-xs text-neutral-500 mt-1">Sessões únicas visualizadas</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-neutral-900 border-neutral-800 shadow-lg hover:border-neutral-700 transition-colors group">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-neutral-400">Carrinhos Criados</CardTitle>
+                        <ShoppingCart className="h-4 w-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-black text-white">{sessionsWithCart.size}</div>
+                        <p className="text-xs text-neutral-500 mt-1">Clientes com intenção de compra</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-neutral-900 border-neutral-800 shadow-lg hover:border-neutral-700 transition-colors group">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-neutral-400">Carrinhos Abandonados</CardTitle>
+                        <MousePointerClick className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-black text-red-400">{abandonedCartsCount}</div>
+                        <p className="text-xs text-red-500/50 mt-1">{cartAbandonmentRate.toFixed(1)}% de desistência</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-neutral-900 border-neutral-800 shadow-lg hover:border-neutral-700 transition-colors group">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-neutral-400">Conversão em Vendas</CardTitle>
+                        <Award className="h-4 w-4 text-green-500 group-hover:scale-110 transition-transform" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-black text-green-400">{conversionRate.toFixed(1)}%</div>
+                        <p className="text-xs text-green-500/50 mt-1">Visitantes que compraram</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* FINANCIAL METRICS (OLD BUT POLISHED) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-neutral-900 border-neutral-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-xs uppercase tracking-wider font-bold text-neutral-500">Faturamento Bruto</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white tracking-tight">
                             {formatCurrency(totalRevenue)}
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-neutral-800 border-neutral-700">
+                <Card className="bg-neutral-900 border-neutral-800">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-white">Custo Total (CMV)</CardTitle>
+                        <CardTitle className="text-xs uppercase tracking-wider font-bold text-neutral-500">Lucro Líquido</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">
-                            - {formatCurrency(totalCost)}
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-neutral-800 border-neutral-700 border-l-4 border-l-green-500">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-white">Lucro Líquido</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-3xl font-bold text-green-500 tracking-tight">
                             {formatCurrency(totalNetProfit)}
                         </div>
-                        <p className="text-xs text-white mt-1">Margem: {margin.toFixed(1)}%</p>
+                        <p className="text-xs text-green-500/80 mt-2 font-mono bg-green-950/30 w-fit px-2 py-1 rounded">
+                            Margem: {margin.toFixed(1)}%
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-neutral-900 border-neutral-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-xs uppercase tracking-wider font-bold text-neutral-500">Ticket Médio</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-white tracking-tight">
+                            {orders.length > 0 ? formatCurrency(totalRevenue / orders.length) : 'R$ 0,00'}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
 
-
-            {/* Chart */}
-            <Card className="bg-neutral-800 border-neutral-700">
-                <CardHeader>
-                    <CardTitle className="text-neutral-200">Evolução de Vendas vs Lucro</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="date" stroke="#888" tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" tickLine={false} axisLine={false} tickFormatter={(val) => `R$${val}`} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#171717', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
-                                formatter={(value: any) => formatCurrency(value)}
-                            />
-                            <Legend />
-                            <Bar dataKey="sales" name="Vendas Brutal" fill="#fbbf24" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="profit" name="Lucro Líquido" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Top 10 Global */}
-                <Card className="bg-neutral-800 border-neutral-700 md:col-span-1 border-l-4 border-l-yellow-500">
+            {/* Charts & Lists */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Chart */}
+                <Card className="bg-neutral-900 border-neutral-800 lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-yellow-500">
-                            <Award className="w-5 h-5" /> Top 10 Global
-                        </CardTitle>
+                        <CardTitle className="text-neutral-200">Evolução Diária</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <ul className="space-y-3">
-                            {top10Global.map((p, i) => (
-                                <li key={i} className="flex justify-between items-center border-b border-neutral-700 pb-2 last:border-0">
-                                    <div className="flex items-center gap-3">
-                                        <span className={`font-bold w-6 h-6 flex items-center justify-center rounded-full text-xs ${i < 3 ? 'bg-yellow-500 text-black' : 'bg-neutral-700 text-neutral-400'}`}>
-                                            {i + 1}
-                                        </span>
-                                        <span className="text-sm font-medium text-neutral-200 line-clamp-1">{p.name}</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-neutral-400">{p.quantity} un</span>
-                                </li>
-                            ))}
-                            {top10Global.length === 0 && <p className="text-neutral-500 text-center">Sem dados no período.</p>}
-                        </ul>
+                    <CardContent className="h-[400px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={dailyData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="#525252"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tick={{ fill: '#737373', fontSize: 12 }}
+                                />
+                                <YAxis
+                                    stroke="#525252"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(val) => `R$${val}`}
+                                    tick={{ fill: '#737373', fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                    contentStyle={{ backgroundColor: '#171717', border: '1px solid #333', borderRadius: '12px' }}
+                                    itemStyle={{ color: '#fff' }}
+                                    formatter={(value: any) => formatCurrency(value)}
+                                />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                <Bar dataKey="sales" name="Vendas Totais" fill="#fbbf24" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                                <Bar dataKey="profit" name="Lucro Real" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* Top Categories */}
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {Object.entries(topByCategory).map(([category, items]) => (
-                        <Card key={category} className="bg-neutral-800 border-neutral-700 h-fit">
-                            <CardHeader className="py-3">
-                                <CardTitle className="text-sm text-neutral-400 uppercase tracking-wider font-bold">{category}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="py-2">
-                                <ul className="space-y-2">
-                                    {items.map((p, i) => (
-                                        <li key={i} className="flex justify-between items-center text-sm">
-                                            <span className="text-neutral-300 truncate max-w-[70%]">{i + 1}. {p.name}</span>
-                                            <span className="text-neutral-500 font-mono">{p.quantity} un</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                {/* Top Products */}
+                <Card className="bg-neutral-900 border-neutral-800 lg:col-span-1 flex flex-col">
+                    <CardHeader className="border-b border-neutral-800/50 pb-4">
+                        <CardTitle className="flex items-center gap-2 text-white">
+                            <Award className="w-5 h-5 text-yellow-500" /> Mais Vendidos
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-auto pr-2 pt-6 custom-scrollbar">
+                        <div className="space-y-4">
+                            {top10Global.map((p, i) => (
+                                <div key={i} className="flex items-center gap-4 group">
+                                    <div className={`
+                                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0
+                                        ${i === 0 ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20' :
+                                            i === 1 ? 'bg-neutral-300 text-black' :
+                                                i === 2 ? 'bg-orange-700 text-white' : 'bg-neutral-800 text-neutral-500'}
+                                    `}>
+                                        {i + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-white font-medium text-sm truncate group-hover:text-primary transition-colors">{p.name}</p>
+                                        <p className="text-xs text-neutral-500">{p.category}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="block font-bold text-white text-sm">{p.quantity} un</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {top10Global.length === 0 && (
+                                <div className="h-full flex flex-col items-center justify-center text-neutral-600 space-y-2 py-10">
+                                    <ShoppingCart className="w-8 h-8 opacity-20" />
+                                    <p className="text-sm">Sem dados de vendas</p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
 }
+
+// Add CSS for custom scrollbar if needed or rely on globals
+
