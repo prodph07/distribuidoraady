@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/providers";
 import { AgeGate } from "@/components/AgeGate";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { DeliveryDisclaimer } from "@/components/DeliveryDisclaimer";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} antialiased bg-background text-foreground`}>
         <Providers>
           <AgeGate />
+          <DeliveryDisclaimer />
           <InstallPrompt />
           {children}
         </Providers>

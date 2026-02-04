@@ -417,7 +417,11 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
     const handleSaveSectionConfig = async () => {
         if (!editingSection) return;
 
-        const { error } = await supabase.from('home_sections').update({ config: sectionConfigForm }).eq('slug', editingSection.slug);
+        // Update Config AND Name (if changed)
+        const updates: any = { config: sectionConfigForm };
+        if (editingSection.name) updates.name = editingSection.name;
+
+        const { error } = await supabase.from('home_sections').update(updates).eq('slug', editingSection.slug);
 
         if (error) alert("Erro ao salvar configuração");
         else {
@@ -585,33 +589,111 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
             <section>
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                        <Settings className="text-primary" /> Seções Fixas do Layout
+                        <Settings className="text-primary" /> Seções do Layout
                     </h2>
+                    <Button onClick={() => {
+                        const newOrder = homeSections.length + 1;
+                        const slug = `carousel-${Date.now()}`;
+                        const newSection = {
+                            slug,
+                            name: "Novo Carrossel",
+                            active: true,
+                            order_index: newOrder,
+                            config: { title: "Novo Título", product_ids: [] }
+                        };
+                        supabase.from('home_sections').insert(newSection).then(({ error }) => {
+                            if (error) alert("Erro ao criar carrossel");
+                            else fetchData();
+                        });
+                    }} size="sm" variant="outline">
+                        <Plus size={16} className="mr-2" /> Novo Carrossel
+                    </Button>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {homeSections.map(section => (
+                <div className="space-y-4">
+                    {homeSections.map((section, index) => (
                         <Card key={section.slug} className={`border border-neutral-800 transition-colors ${section.active ? 'bg-neutral-900' : 'bg-neutral-950 opacity-60'}`}>
-                            <CardContent className="p-4">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="font-bold">{section.name}</h3>
-                                        <p className="text-xs text-neutral-500 font-mono">{section.slug}</p>
-                                    </div>
-                                    <Switch
-                                        checked={section.active}
-                                        onCheckedChange={() => handleToggleSection(section)}
-                                    />
+                            <CardContent className="p-4 flex items-center gap-4">
+                                {/* Order Controls */}
+                                <div className="flex flex-col gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 rounded-full hover:bg-neutral-800"
+                                        disabled={index === 0}
+                                        onClick={async () => {
+                                            if (index === 0) return;
+                                            const prevSection = homeSections[index - 1];
+                                            const currentSection = section;
+                                            // Swap orders
+                                            await supabase.from('home_sections').update({ order_index: prevSection.order_index }).eq('slug', currentSection.slug);
+                                            await supabase.from('home_sections').update({ order_index: currentSection.order_index }).eq('slug', prevSection.slug);
+                                            fetchData();
+                                        }}
+                                    >
+                                        <div className="rotate-180">▼</div>
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 rounded-full hover:bg-neutral-800"
+                                        disabled={index === homeSections.length - 1}
+                                        onClick={async () => {
+                                            if (index === homeSections.length - 1) return;
+                                            const nextSection = homeSections[index + 1];
+                                            const currentSection = section;
+                                            // Swap orders
+                                            await supabase.from('home_sections').update({ order_index: nextSection.order_index }).eq('slug', currentSection.slug);
+                                            await supabase.from('home_sections').update({ order_index: currentSection.order_index }).eq('slug', nextSection.slug);
+                                            fetchData();
+                                        }}
+                                    >
+                                        ▼
+                                    </Button>
+                                    <span className="text-[10px] text-neutral-500 text-center font-mono">#{section.order_index}</span>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full text-xs"
-                                    onClick={() => handleOpenSectionConfig(section)}
-                                    disabled={!section.active}
-                                >
-                                    Configurar
-                                </Button>
+
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold flex items-center gap-2">
+                                                {section.name}
+                                                {section.slug.startsWith('carousel-') && <span className="text-[10px] bg-blue-900 text-blue-200 px-1 rounded">CUSTOM</span>}
+                                            </h3>
+                                            <p className="text-xs text-neutral-500 font-mono">{section.slug}</p>
+                                        </div>
+                                        <Switch
+                                            checked={section.active}
+                                            onCheckedChange={() => handleToggleSection(section)}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="flex-1 text-xs h-8"
+                                            onClick={() => handleOpenSectionConfig(section)}
+                                            disabled={!section.active}
+                                        >
+                                            <Settings className="w-3 h-3 mr-2" /> Configurar
+                                        </Button>
+                                        {section.slug.startsWith('carousel-') && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-8 text-red-500 hover:text-red-600 border-red-900/30 hover:bg-red-900/20"
+                                                onClick={async () => {
+                                                    if (confirm("Excluir este carrossel?")) {
+                                                        await supabase.from('home_sections').delete().eq('slug', section.slug);
+                                                        fetchData();
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 size={14} />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
@@ -626,8 +708,35 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                     </DialogHeader>
 
                     <div className="space-y-4 mt-4">
-                        {editingSection && Object.keys(editingSection.config).length === 0 && (
+                        {editingSection && Object.keys(editingSection.config).length === 0 && !editingSection.slug.startsWith('carousel-') && (
                             <p className="text-sm text-neutral-500 italic">Esta seção não possui configurações de texto ou imagem.</p>
+                        )}
+
+                        {/* Custom Name for Carousels */}
+                        {editingSection && editingSection.slug.startsWith('carousel-') && (
+                            <div>
+                                <Label>Nome (Identificação no Admin)</Label>
+                                <Input
+                                    value={editingSection.name}
+                                    onChange={async (e) => {
+                                        setEditingSection({ ...editingSection, name: e.target.value });
+                                        // Auto-update config title too for convenience, if they match
+                                        setSectionConfigForm({
+                                            ...sectionConfigForm,
+                                            title: e.target.value
+                                        });
+                                    }}
+                                    className="bg-neutral-900 border-neutral-800"
+                                />
+                                <div className="mt-2">
+                                    <Label>Título (Exibido no Site)</Label>
+                                    <Input
+                                        value={sectionConfigForm.title || ''}
+                                        onChange={e => setSectionConfigForm({ ...sectionConfigForm, title: e.target.value })}
+                                        className="bg-neutral-900 border-neutral-800"
+                                    />
+                                </div>
+                            </div>
                         )}
 
                         {editingSection && editingSection.slug === 'categories' ? (
@@ -748,7 +857,7 @@ export function HomeConfigTab({ products }: { products: Product[] }) {
                         )}
 
                         {/* Manual Product Selection Button for relevant sections */}
-                        {editingSection && ['recommended', 'beers'].includes(editingSection.slug) && (
+                        {editingSection && (['recommended', 'beers'].includes(editingSection.slug) || editingSection.slug.startsWith('carousel-')) && (
                             <div className="pt-2 border-t border-neutral-800">
                                 <Label className="block mb-2 text-yellow-500">Seleção Manual de Produtos</Label>
                                 <Button variant="secondary" onClick={openProductSelectorForSection} className="w-full justify-between">

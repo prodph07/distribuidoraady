@@ -125,8 +125,16 @@ export function Header() {
 
                     {/* Logo Area */}
                     <Link href="/" className="flex items-center gap-2 shrink-0 group">
-                        <div className="bg-black p-2 rounded-full transition-transform group-hover:scale-105">
-                            <Beer className="h-5 w-5 text-primary" />
+                        <div className="bg-black p-1 rounded-full transition-transform group-hover:scale-105 overflow-hidden border border-border">
+                            <div className="relative w-8 h-8">
+                                <Image
+                                    src="/logo.png?v=1"
+                                    alt="Logo Ady"
+                                    fill
+                                    className="object-contain"
+                                    unoptimized
+                                />
+                            </div>
                         </div>
                         <span className="text-xl font-black tracking-tighter text-black hidden sm:block">
                             DISTRIBUIDORA<span className="font-light">ADY</span>
