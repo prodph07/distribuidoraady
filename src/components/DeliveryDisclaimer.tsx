@@ -41,6 +41,8 @@ export function DeliveryDisclaimer() {
                     <DialogTitle className="text-center text-xl">Aviso Importante</DialogTitle>
                     <DialogDescription className="text-center text-base pt-2">
                         Os valores apresentados no aplicativo são válidos <span className="font-bold text-foreground">apenas para Delivery</span>.
+                        <br /><br />
+                        Horário de funcionamento: <span className="font-bold text-foreground">09h às 21h</span>.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="sm:justify-center">

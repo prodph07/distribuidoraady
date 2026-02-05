@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, ShoppingBag, ArrowLeft, Plus } from "lucide-react";
+import { Trash2, AlertTriangle, CheckCircle2, Bike, CreditCard, Banknote, MapPin, User, Phone, ShoppingBag, ArrowLeft, Plus, DoorClosed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +16,7 @@ import { PixPaymentModal } from "@/components/PixPaymentModal";
 import { Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 export default function CheckoutPage() {
     const { items, removeFromCart, cartTotal, clearCart, addToCart } = useCart();
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(false);
 
     const { trackEvent } = useAnalytics();
+    const { isOpen, loading: storeStatusLoading } = useStoreSettings();
 
     useEffect(() => {
         if (items.length > 0) {
@@ -255,6 +257,21 @@ export default function CheckoutPage() {
                     </Link>
                     <h1 className="text-2xl font-black text-white tracking-tight">Finalizar Pedido</h1>
                 </div>
+
+                {!isOpen && !storeStatusLoading && (
+                    <div className="bg-red-900/20 border-2 border-red-500/50 rounded-2xl p-5 mb-6 flex items-start gap-4 animate-in slide-in-from-top-4">
+                        <div className="bg-red-900/40 p-2 rounded-full shrink-0">
+                            <DoorClosed className="w-6 h-6 text-red-500" />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-red-500 text-lg">Loja Fechada</h3>
+                            <p className="text-sm text-red-200/80 font-medium leading-relaxed">
+                                Nosso horário de atendimento é das 09h às 21h. <br />
+                                Você pode montar seu carrinho, mas <strong>só aceitamos pedidos durante o horário de funcionamento.</strong>
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -535,7 +552,7 @@ export default function CheckoutPage() {
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-900 border-t border-neutral-800 shadow-[0_-4px_10px_rgba(0,0,0,0.2)] z-10 md:relative md:bg-transparent md:border-t-0 md:shadow-none md:p-0">
                         <Button
                             type="submit"
-                            disabled={(hasExchangeItems && !commitment) || loading || cartTotal < minOrderValue}
+                            disabled={(hasExchangeItems && !commitment) || loading || cartTotal < minOrderValue || (!isOpen && !storeStatusLoading)}
                             className="w-full h-16 rounded-2xl font-black text-xl bg-primary text-black hover:bg-yellow-400 shadow-xl shadow-yellow-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
