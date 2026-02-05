@@ -161,6 +161,7 @@ export function OrderHistory() {
                             <TableHead className="text-gray-400">Data</TableHead>
                             <TableHead className="text-gray-400">Cliente</TableHead>
                             <TableHead className="text-gray-400">Status</TableHead>
+                            <TableHead className="text-gray-400">Pagamento</TableHead>
                             <TableHead className="text-gray-400">Resumo</TableHead>
                             <TableHead className="text-right text-gray-400">Total</TableHead>
                         </TableRow>
@@ -186,13 +187,27 @@ export function OrderHistory() {
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={`capitalize ${order.status === 'delivered'
-                                                ? 'bg-green-900/20 text-green-400 border-green-900/50'
-                                                : order.status === 'cancelled'
-                                                    ? 'bg-red-900/20 text-red-500 border-red-900/50'
-                                                    : 'text-gray-400 border-gray-700'
+                                            ? 'bg-green-900/20 text-green-400 border-green-900/50'
+                                            : order.status === 'cancelled'
+                                                ? 'bg-red-900/20 text-red-500 border-red-900/50'
+                                                : 'text-gray-400 border-gray-700'
                                             }`}>
                                             {order.status === 'delivered' ? 'Concluído' : order.status === 'cancelled' ? 'Cancelado' : order.status}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-xs font-bold text-gray-300 uppercase">
+                                                {order.payment_method === 'pix' ? 'PIX' :
+                                                    order.payment_method === 'card_machine' ? 'Cartão' :
+                                                        order.payment_method === 'money' ? 'Dinheiro' : 'Online'}
+                                            </span>
+                                            {order.payment_method === 'money' && order.change_needed && (
+                                                <span className="text-[10px] text-gray-500">
+                                                    Troco: R$ {order.change_needed.toFixed(2)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-gray-400 text-sm max-w-xs truncate">
                                         {order.order_items?.map(i => `${i.quantity}x ${i.products?.name}`).join(', ')}

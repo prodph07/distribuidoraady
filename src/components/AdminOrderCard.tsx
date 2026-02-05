@@ -39,6 +39,8 @@ Olha ${order.customer_name.split(' ')[0]}, acompanhe seu pedido em tempo real:
 🔗 *${magicLink}*
 
 📍 *Entrega em:* ${order.address}
+💰 *Pagamento:* ${order.payment_method === 'pix' ? 'PIX Online' : order.payment_method === 'card_machine' ? 'Maquininha' : 'Dinheiro'}
+${order.payment_method === 'money' && (order.change_needed || 0) > 0 ? `💵 *Troco para:* R$ ${order.change_needed?.toFixed(2).replace('.', ',')}` : ''}
 ${exchangeText}`;
 
         window.open(`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
@@ -158,6 +160,28 @@ ${exchangeText}`;
                     <span className="font-bold text-lg text-neutral-200">
                         R$ {order.total_amount.toFixed(2).replace(".", ",")}
                     </span>
+
+                    {/* Payment Method Badge */}
+                    <div className="flex flex-col items-end gap-1">
+                        <span className={cn(
+                            "text-[10px] uppercase font-bold px-2 py-0.5 rounded border",
+                            order.payment_method === 'pix' ? "bg-cyan-900/20 text-cyan-400 border-cyan-900/50" :
+                                order.payment_method === 'card_machine' ? "bg-blue-900/20 text-blue-400 border-blue-900/50" :
+                                    order.payment_method === 'money' ? "bg-green-900/20 text-green-400 border-green-900/50" :
+                                        "bg-neutral-700 text-neutral-400 border-neutral-600"
+                        )}>
+                            {order.payment_method === 'pix' ? 'PIX' :
+                                order.payment_method === 'card_machine' ? 'MAQUININHA' :
+                                    order.payment_method === 'money' ? 'DINHEIRO' : 'ONLINE'}
+                        </span>
+
+                        {/* Change Alert */}
+                        {order.payment_method === 'money' && (order.change_needed || 0) > 0 && (
+                            <span className="text-xs font-bold text-red-500 animate-pulse bg-red-900/10 px-1 rounded">
+                                TROCO P/: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.change_needed || 0)}
+                            </span>
+                        )}
+                    </div>
                     <button
                         onClick={(e) => {
                             e.stopPropagation();

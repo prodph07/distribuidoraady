@@ -51,6 +51,8 @@ export interface Order {
     payment_id: string | null;
     total_amount: number;
     created_at: string;
+    payment_method?: 'pix' | 'money' | 'card_machine';
+    change_needed?: number;
     archived?: boolean;
     order_items?: OrderItem[];
     total?: number; // legacy prop compatibility if needed, or alias total_amount

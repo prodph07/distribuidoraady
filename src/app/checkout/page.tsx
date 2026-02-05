@@ -45,6 +45,7 @@ export default function CheckoutPage() {
         complement: "",
     });
     const [paymentMethod, setPaymentMethod] = useState("online"); // Default to online (Pix)
+    const [changeNeeded, setChangeNeeded] = useState(""); // Input for change
     const [commitment, setCommitment] = useState(false);
 
     // Fee State
@@ -139,7 +140,9 @@ export default function CheckoutPage() {
                     total_amount: finalTotal,
                     delivery_fee: deliveryFee,
                     service_fee: serviceFee,
-                    payment_id: 'offline', // Placeholder for offline payment
+                    payment_id: paymentMethod === 'online' ? 'offline' : 'pay_on_delivery', // Legacy field, keeping 'offline' for logic compatibility or changing to new status
+                    payment_method: paymentMethod,
+                    change_needed: paymentMethod === 'money' && changeNeeded ? parseFloat(changeNeeded.replace(',', '.')) : 0,
                 })
                 .select()
                 .single();
@@ -463,27 +466,88 @@ export default function CheckoutPage() {
                                 <Banknote className="w-5 h-5 text-primary" /> Pagamento
                             </h2>
 
-                            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-3 mb-6">
+                            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
 
+                                {/* OPTION 1: PIX */}
                                 <Label
                                     htmlFor="online"
                                     className={cn(
-                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-24 text-center col-span-2 hover:border-neutral-700",
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-28 text-center hover:border-neutral-700 relative",
                                         paymentMethod === 'online'
                                             ? "border-primary bg-primary/10 text-white"
                                             : "border-neutral-800 bg-neutral-800 text-neutral-400"
                                     )}
                                 >
                                     <RadioGroupItem value="online" id="online" className="sr-only" />
-                                    <div className="flex gap-2">
-                                        <div className="bg-[#32BCAD] p-1 rounded text-white">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L5 5" /><path d="M19 5l-4.172 4.172A2 2 0 0 1 13.414 10H5v12" /></svg>
-                                        </div>
-                                        <Zap className={cn("w-6 h-6", paymentMethod === 'online' ? "text-primary" : "text-neutral-500")} />
+                                    {paymentMethod === 'online' && <div className="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full" />}
+                                    <div className="bg-[#32BCAD] p-2 rounded-full text-white mb-1">
+                                        <Zap className="w-5 h-5" />
                                     </div>
-                                    <span className="font-bold text-sm">Pagar Online (Pix)</span>
+                                    <span className="font-bold text-sm">Pix Online</span>
+                                    <span className="text-[10px] text-neutral-500 font-medium">Aprovação imediata</span>
+                                </Label>
+
+                                {/* OPTION 2: CARD MACHINE */}
+                                <Label
+                                    htmlFor="card_machine"
+                                    className={cn(
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-28 text-center hover:border-neutral-700 relative",
+                                        paymentMethod === 'card_machine'
+                                            ? "border-primary bg-primary/10 text-white"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
+                                    )}
+                                >
+                                    <RadioGroupItem value="card_machine" id="card_machine" className="sr-only" />
+                                    {paymentMethod === 'card_machine' && <div className="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full" />}
+                                    <div className="bg-neutral-700 p-2 rounded-full text-white mb-1">
+                                        <CreditCard className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-bold text-sm">Maquininha</span>
+                                    <span className="text-[10px] text-neutral-500 font-medium">Crédito/Débito na entrega</span>
+                                </Label>
+
+                                {/* OPTION 3: CASH */}
+                                <Label
+                                    htmlFor="money"
+                                    className={cn(
+                                        "flex flex-col items-center justify-center space-y-2 border-2 p-3 rounded-2xl cursor-pointer transition-all h-28 text-center hover:border-neutral-700 relative",
+                                        paymentMethod === 'money'
+                                            ? "border-primary bg-primary/10 text-white"
+                                            : "border-neutral-800 bg-neutral-800 text-neutral-400"
+                                    )}
+                                >
+                                    <RadioGroupItem value="money" id="money" className="sr-only" />
+                                    {paymentMethod === 'money' && <div className="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full" />}
+                                    <div className="bg-green-700 p-2 rounded-full text-white mb-1">
+                                        <Banknote className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-bold text-sm">Dinheiro</span>
+                                    <span className="text-[10px] text-neutral-500 font-medium">Pagamento na entrega</span>
                                 </Label>
                             </RadioGroup>
+
+                            {/* CHANGE INPUT FOR CASH */}
+                            {paymentMethod === 'money' && (
+                                <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 mb-6 animate-in slide-in-from-top-2">
+                                    <Label htmlFor="change" className="font-bold text-sm text-neutral-400 mb-2 block">
+                                        Precisa de troco para quanto?
+                                    </Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-3 text-neutral-500 font-bold">R$</span>
+                                        <Input
+                                            id="change"
+                                            type="number"
+                                            placeholder="Ex: 50,00"
+                                            value={changeNeeded}
+                                            onChange={(e) => setChangeNeeded(e.target.value)}
+                                            className="pl-10 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-600 font-bold text-lg"
+                                        />
+                                    </div>
+                                    <p className="text-[11px] text-neutral-500 mt-2">
+                                        Deixe em branco se não precisar de troco.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-2 pt-4 border-t border-neutral-800">
                                 <div className="flex justify-between items-center text-sm text-neutral-500">
